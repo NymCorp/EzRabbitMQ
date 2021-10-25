@@ -1,2 +1,2 @@
-# EzRabbitMq
-Easy to use RabbitMq library to send and receive messages.
+# EzRabbitMQ
+Easy to use RabbitMQ library to send and receive messages.
