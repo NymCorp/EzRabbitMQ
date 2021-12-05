@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+        <TargetFramework>net5.0</TargetFramework>
+        <Nullable>enable</Nullable>
+        <UserSecretsId>43f6c7f5-d5fe-4f8c-b92d-d52108587d56</UserSecretsId>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <PackageReference Include="Microsoft.Extensions.Hosting" Version="5.0.0" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\..\EzRabbitMQ\EzRabbitMQ.csproj" />
+      <ProjectReference Include="..\..\Tests\EzRabbitMQ.Tests\EzRabbitMQ.Tests.csproj" />
+      <ProjectReference Include="..\Sample.Domain\Sample.Domain.csproj" />
+    </ItemGroup>
+
+</Project>
