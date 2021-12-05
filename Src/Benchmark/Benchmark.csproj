@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+        <TargetFramework>net5.0</TargetFramework>
+        <Nullable>enable</Nullable>
+        <Optimize>true</Optimize>
+        <DebugType>pdbonly</DebugType>
+        <DebugSymbols>true</DebugSymbols>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <PackageReference Include="BenchmarkDotNet" Version="0.13.1" />
+      <PackageReference Include="MessagePack" Version="2.3.85" />
+      <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="[5.0.0,]" />
+      <PackageReference Include="Microsoft.Extensions.Logging" Version="[5.0.0,]" />
+      <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="[5.0.0,]" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\EzRabbitMQ\EzRabbitMQ.csproj" />
+      <ProjectReference Include="..\Sample\Sample.Domain\Sample.Domain.csproj" />
+    </ItemGroup>
+
+</Project>
