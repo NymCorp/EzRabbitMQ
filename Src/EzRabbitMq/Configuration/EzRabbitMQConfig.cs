@@ -23,6 +23,11 @@ namespace EzRabbitMQ
                 );
 
         /// <summary>
+        /// Is async dispatcher or sync dispatcher, default value to false, async dispatcher doesnt guarantee message order.
+        /// </summary>
+        public bool IsAsyncDispatcher { get; set; }
+
+        /// <summary>
         /// IConnectionFactory with default value targeting localhost.
         ///  <example>Connection.UserName = "example-user";</example>
         /// </summary>
@@ -33,14 +38,12 @@ namespace EzRabbitMQ
             UserName = "guest",
             Port = 5672,
             VirtualHost = "/",
-            DispatchConsumersAsync = true
         };
 
         /// <summary>
         /// Data serializer.
         /// </summary>
         public Func<object, byte[]> SerializeData { get; private set; } = obj => JsonSerializer.SerializeToUtf8Bytes(obj);
-
 
         /// <summary>
         /// Data deserializer.

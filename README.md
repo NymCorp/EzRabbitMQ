@@ -4,7 +4,7 @@
 
 [![.NET](https://github.com/BrunevalPE/EzRabbitMq/actions/workflows/dotnet.yml/badge.svg)](https://github.com/BrunevalPE/EzRabbitMq/actions/workflows/dotnet.yml)
 
-To goal of this library is to simplify the usage of **RabbitMQ dotnet client**.
+The main goal of this library is simplifying the usage of **RabbitMQ dotnet client**.
 
 To receive a message you will need a `Mailbox`, mailboxes take `IMailboxOptions` as parameter, and there are helpful implementations of `IMailboxOptions`, 
 like `DirectMailboxOptions` which has default Exchange name **"amq.direct"** and preset ExchangeType = **"direct"**.
@@ -15,11 +15,7 @@ When you create a `Mailbox` you can specify the `ConsumerOptions` allowing you t
 
 ### Install
 
-`Install-Package EzRabbitMq`
-
- or
-
-`dotnet add package EzRabbitMq`
+`dotnet add package EzRabbitMQ --prerelease`
 
 ### Register services EzRabbitMQ services :
 
@@ -45,10 +41,10 @@ producer sending a exchange type **direct** to the mailbox.
 The event `OnMessageReceived` will be raised:
 
 ```c#
+record DataSample(string Text);
+
 IProducerService producerService; // use injection to get a IProducerService
 IMailboxService mailboxService; // use injection to get a IMailboxService
-
-record DataSample(string Text);
 
 using var mailbox = mailboxService.Direct<DataSample>("ROUTING KEY", "MAILBOX NAME");
 
@@ -248,7 +244,6 @@ services.AddEzRabbitMQ(config =>
 });
 ```
 
-
 ## ConsumerOptions
 
 This options can add rabbitMQ arguments to enable / disable features.
@@ -322,7 +317,6 @@ var options = new ConsumerOptions
     ExchangeRecreateMode = RecreateMode.RecreateIfBreakingChangeDetected
 };
 ```
-
 
 ## License
 

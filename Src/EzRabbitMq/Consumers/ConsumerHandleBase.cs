@@ -83,7 +83,7 @@ namespace EzRabbitMQ
         /// <summary>
         /// RabbitMQ Consumer
         /// </summary>
-        protected AsyncEventingBasicConsumer? Consumer { get; private set; }
+        protected IBasicConsumer? Consumer { get; private set; }
 
         /// <inheritdoc />
         public void Dispose()
@@ -94,35 +94,55 @@ namespace EzRabbitMQ
         private void CreateConsumer()
         {
             using var operation = Session.Telemetry.Request(Options, "BasicConsumer created");
+            Consumer = Session.Config.IsAsyncDispatcher ? CreateAsyncConsumer() : CreateSyncConsumer();
+        }
 
-            var consumer = new AsyncEventingBasicConsumer(Session.Model);
+        private IBasicConsumer CreateSyncConsumer()
+        {
+            var consumer = new EventingBasicConsumer(Session.Model);
             consumer.Shutdown += Consumer_Shutdown;
             consumer.Received += Consumer_Received;
             consumer.Registered += Consumer_Registered;
             consumer.Unregistered += Consumer_Unregistered;
             consumer.ConsumerCancelled += Consumer_ConsumerCancelled;
-            Consumer = consumer;
+            return consumer;
         }
 
-        private Task Consumer_Registered(object? sender, ConsumerEventArgs @event)
+        private IBasicConsumer CreateAsyncConsumer()
+        {
+            var consumer = new AsyncEventingBasicConsumer(Session.Model);
+            consumer.Shutdown += AsyncConsumer_Shutdown;
+            consumer.Received += AsyncConsumer_Received;
+            consumer.Registered += AsyncConsumer_Registered;
+            consumer.Unregistered += AsyncConsumer_Unregistered;
+            consumer.ConsumerCancelled += AsyncConsumer_ConsumerCancelled;
+            return consumer;
+        }
+
+        private Task AsyncConsumer_Registered(object? sender, ConsumerEventArgs @event)
         {
             Session.Telemetry.Trace("Consumer registered", new() {{"consumerTag", ConsumerTag}});
 
             return Task.CompletedTask;
         }
 
-        /// <summary>
-        /// Event raised on message received by the consumer
-        /// </summary>
-        /// <param name="sender">Event sender</param>
-        /// <param name="event">RabbitMQ raw event</param>
-        protected Task Consumer_Received(object? sender, BasicDeliverEventArgs @event)
+        private void Consumer_Registered(object? sender, ConsumerEventArgs @event)
+        {
+            AsyncConsumer_Registered(sender, @event).Wait();
+        }
+
+        private Task AsyncConsumer_Received(object? sender, BasicDeliverEventArgs @event)
         { 
             using var operation = Session.Telemetry.Dependency(Options, "OnMessageHandle");
             
             operation.Telemetry.Context.Operation.SetTelemetry(@event.BasicProperties);
 
             return MessageHandle(sender, @event);
+        }
+        
+        private void Consumer_Received(object? sender, BasicDeliverEventArgs @event)
+        {
+            AsyncConsumer_Received(sender, @event).GetAwaiter().GetResult();
         }
         
         /// <summary>
@@ -184,14 +204,19 @@ namespace EzRabbitMQ
             Session.Model?.BasicReject(@event.DeliveryTag, false);
         }
 
-        private Task Consumer_ConsumerCancelled(object? sender, ConsumerEventArgs e)
+        private Task AsyncConsumer_ConsumerCancelled(object? sender, ConsumerEventArgs e)
         {
             Session.Telemetry.Trace("Consumer cancelled", new() {{"consumerTag", ConsumerTag}});
             
             return Task.CompletedTask;
         }
+        
+        private void Consumer_ConsumerCancelled(object? sender, ConsumerEventArgs e)
+        {
+            AsyncConsumer_ConsumerCancelled(sender, e).Wait();
+        }
 
-        private Task Consumer_Shutdown(object? sender, ShutdownEventArgs e)
+        private Task AsyncConsumer_Shutdown(object? sender, ShutdownEventArgs e)
         {
             if (e.ReplyCode != 200)
             {
@@ -208,14 +233,24 @@ namespace EzRabbitMQ
 
             return Task.CompletedTask;
         }
+        
+        private void Consumer_Shutdown(object? sender, ShutdownEventArgs e)
+        {
+            AsyncConsumer_Shutdown(sender, e).Wait();
+        }
 
-        private Task Consumer_Unregistered(object? sender, ConsumerEventArgs e)
+        private Task AsyncConsumer_Unregistered(object? sender, ConsumerEventArgs e)
         {
             Session.Telemetry.Trace("Consumer unregistered", new() {{"consumerTag", ConsumerTag}});
 
             Logger.LogDebug("Consumer unregistered : {ConsumerTag}", ConsumerTag);
             
             return Task.CompletedTask;
+        }
+        
+        private void Consumer_Unregistered(object? sender, ConsumerEventArgs e)
+        {
+            AsyncConsumer_Unregistered(sender, e).Wait();
         }
     }
 }

@@ -17,11 +17,14 @@ namespace EzRabbitMQ
         /// <param name="services">Your application service collection</param>
         /// <param name="configure">Optional configure action can be pass to configure behaviors like PollyPolicies or server connection</param>
         /// <returns>IServiceCollection</returns>
+        // ReSharper disable once InconsistentNaming
         public static IServiceCollection AddEzRabbitMQ(this IServiceCollection services, Action<EzRabbitMQConfig>? configure = default!)
         {
             var config = new EzRabbitMQConfig();
             
             configure?.Invoke(config);
+
+            config.Connection.DispatchConsumersAsync = config.IsAsyncDispatcher;
 
             services
                 .AddSingleton(config)
