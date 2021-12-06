@@ -20,6 +20,8 @@ namespace EzRabbitMQ.Tests
                 .AddLogging()
                 .AddEzRabbitMQ(config =>
                 {
+                    config.IsAsyncDispatcher = true;
+                    
                     output.WriteLine($"virtual host detected : {config.Connection.VirtualHost}");
                     var cs = Environment.GetEnvironmentVariable("EzRabbitMQ__ConnectionString");
                     if (!string.IsNullOrWhiteSpace(cs))
