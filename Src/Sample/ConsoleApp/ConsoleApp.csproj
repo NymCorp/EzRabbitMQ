@@ -12,8 +12,8 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\..\EzRabbitMQ\EzRabbitMQ.csproj" />
-      <ProjectReference Include="..\..\Tests\EzRabbitMQ.Tests\EzRabbitMQ.Tests.csproj" />
+      <ProjectReference Include="..\..\EzRabbitMq\EzRabbitMQ.csproj" />
+      <ProjectReference Include="..\..\Tests\EzRabbitMq.Tests\EzRabbitMQ.Tests.csproj" />
     </ItemGroup>
 
 </Project>
