@@ -6,7 +6,7 @@
         <Description>RabbitMQ .Net client wrapper to simplify usage of rabbitMQ.</Description>
         <Version>6.2.2.2-alpha</Version>
         <GenerateDocumentationFile>true</GenerateDocumentationFile>
-        <PackageVersion>6.2.2.3</PackageVersion>
+        <PackageVersion>6.2.2.4</PackageVersion>
         <Title>EzRabbitMQ</Title>
         <Copyright>Licence Apache2</Copyright>
         <icon>https://github.com/NymCorp/EzRabbitMQ/raw/main/docs/images/logo.png</icon>
