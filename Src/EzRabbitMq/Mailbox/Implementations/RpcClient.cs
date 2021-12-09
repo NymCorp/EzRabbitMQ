@@ -65,14 +65,13 @@ namespace EzRabbitMQ
             var sw = Stopwatch.StartNew();
 
             var body = Session.Config.SerializeData(request);
-
             var props = Session.Model.CreateBasicProperties();
             
             props.ReplyTo = Constants.RpcReplyToQueue;
             props.CorrelationId = Options.CorrelationId;
             props.Type = request.GetType().AssemblyQualifiedName;
 
-            Session.Model.BasicPublish(ExchangeType.RpcServer.Name(), Options.RoutingKey, false, props, body);
+            Session.Model.BasicPublish(ExchangeType.RpcServer.Name(), Options.RoutingKey, false, props, new ReadOnlyMemory<byte>(body));
             Logger.LogDebug("Message sent to {Exchange} routing Key: {RoutingKey}", ExchangeType.RpcServer.Name(), Options.RoutingKey);
             
             var timeoutCts = new CancellationTokenSource(ConsumerOptions.RpcCallTimeout);

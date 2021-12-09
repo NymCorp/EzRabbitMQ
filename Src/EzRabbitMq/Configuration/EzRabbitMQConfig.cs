@@ -67,11 +67,6 @@ namespace EzRabbitMQ
         /// <param name="connection"><see cref="ConnectionFactory"/> instance.</param>
         public void ConfigureConnection(ConnectionFactory connection)
         {
-            if (connection.DispatchConsumersAsync != true)
-            {
-                throw new ArgumentException("DispatchConsumersAsync must be true");
-            }
-            
             Connection = connection;
         }
 

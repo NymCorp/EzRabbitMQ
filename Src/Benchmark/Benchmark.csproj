@@ -18,7 +18,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\EzRabbitMQ\EzRabbitMQ.csproj" />
+      <ProjectReference Include="..\EzRabbitMq\EzRabbitMQ.csproj" />
     </ItemGroup>
 
 </Project>

@@ -5,13 +5,13 @@ VisualStudioVersion = 16.0.31112.23
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Sample", "Sample", "{77126D97-021F-4239-A50B-3D80F145F3EC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EzRabbitMQ", "src\EzRabbitMQ\EzRabbitMQ.csproj", "{C7852DAC-9C55-48FB-B452-DA31030BA956}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EzRabbitMQ", "Src\EzRabbitMq\EzRabbitMQ.csproj", "{C7852DAC-9C55-48FB-B452-DA31030BA956}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EzRabbitMQ.Tests", "src\Tests\EzRabbitMQ.Tests\EzRabbitMQ.Tests.csproj", "{EF252BCC-010D-484D-8DAF-3A8C96C974EE}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EzRabbitMQ.Tests", "Src\Tests\EzRabbitMq.Tests\EzRabbitMQ.Tests.csproj", "{EF252BCC-010D-484D-8DAF-3A8C96C974EE}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Benchmark", "src\Benchmark\Benchmark.csproj", "{FFDB58CD-1574-46B1-B728-10704CEEBD9D}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Benchmark", "Src\Benchmark\Benchmark.csproj", "{FFDB58CD-1574-46B1-B728-10704CEEBD9D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ConsoleApp", "src\Sample\ConsoleApp\ConsoleApp.csproj", "{412A3A4D-2A4F-497B-A3D2-99F60578C0E5}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ConsoleApp", "Src\Sample\ConsoleApp\ConsoleApp.csproj", "{412A3A4D-2A4F-497B-A3D2-99F60578C0E5}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

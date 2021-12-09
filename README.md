@@ -250,6 +250,17 @@ This options can add rabbitMQ arguments to enable / disable features.
 
 ConsumerOptions default values:
 
+#### Async Dispatcher:
+
+You can switch between async and sync dispatcher using the configuration :
+
+```c#
+services.AddEzRabbitMQ(config =>
+{
+    config.IsAsyncDispatcher = true;
+});
+```
+
 #### RetryCount:
 
 You can enable retry on consumer exception by using the consumerOptions object :

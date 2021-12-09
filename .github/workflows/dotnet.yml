@@ -2,9 +2,9 @@ name: Run and Test library
 
 on:
   push:
-    branches: [ master ]
+    branches: [ main ]
   pull_request:
-    branches: [ master ]
+    branches: [ main ]
 
 jobs:
   build:
@@ -19,16 +19,9 @@ jobs:
       with:
         dotnet-version: 5.0.x
     - name: Restore dependencies
-      run: dotnet restore
-    - name: Copy Readme into library
-      uses: canastro/copy-action@0.0.2
-      with:
-        source: ./readme.md
-        target: ./src/EzRabbitMQ/readme.md
+      run: dotnet restore EzRabbitMQ.sln
     - name: Build
-      run: dotnet build --no-restore
-    - name: Publish
-      run: dotnet publish ./src/Benchmark/Benchmark.csproj -c Release --verbosity normal -o ./publish/
+      run: dotnet build EzRabbitMQ.sln --no-restore
     - uses: mer-team/rabbitmq-mng-action@v1.2
       with:
         RABBITMQ_TAG: '3-management-alpine'
