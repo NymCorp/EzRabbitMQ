@@ -24,7 +24,7 @@ jobs:
       uses: canastro/copy-action@0.0.2
       with:
         source: ./README.md
-        target: ./src/EzRabbitMQ/readme.md
+        target: ./Src/EzRabbitMQ/readme.md
     - name: Build
       run: dotnet build --no-restore
     - uses: mer-team/rabbitmq-mng-action@v1.2
