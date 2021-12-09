@@ -23,7 +23,7 @@ jobs:
     - name: Copy Readme into library
       uses: canastro/copy-action@0.0.2
       with:
-        source: ./readme.md
+        source: ./README.md
         target: ./src/EzRabbitMQ/readme.md
     - name: Build
       run: dotnet build --no-restore
