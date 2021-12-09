@@ -21,7 +21,7 @@ jobs:
     - name: Restore dependencies
       run: dotnet restore EzRabbitMQ.sln
     - name: Build
-      run: dotnet build --no-restore
+      run: dotnet build EzRabbitMQ.sln --no-restore
     - uses: mer-team/rabbitmq-mng-action@v1.2
       with:
         RABBITMQ_TAG: '3-management-alpine'
