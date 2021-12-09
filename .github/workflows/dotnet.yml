@@ -19,9 +19,7 @@ jobs:
       with:
         dotnet-version: 5.0.x
     - name: Restore dependencies
-      run: |
-        ls
-        dotnet restore
+      run: dotnet restore EzRabbitMQ.sln
     - name: Copy Readme into library
       uses: canastro/copy-action@0.0.2
       with:
