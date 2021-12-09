@@ -128,7 +128,7 @@ namespace EzRabbitMQ
                 return;
             }
             _session.Properties.Type = type;
-            _session.Model.BasicPublish(_options.ExchangeName, _options.RoutingKey, _session.Properties, body);
+            _session.Model.BasicPublish(_options.ExchangeName, _options.RoutingKey, _session.Properties, new ReadOnlyMemory<byte>(body));
         }
 
         /// <inheritdoc />

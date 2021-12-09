@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
 using EzRabbitMQ.Extensions;
 using EzRabbitMQ.Reflection;
 using Microsoft.Extensions.Logging;
@@ -54,7 +55,7 @@ namespace EzRabbitMQ
                 props.CorrelationId = @event.BasicProperties.CorrelationId;
                 props.Type = response.GetType().AssemblyQualifiedName;
                 
-                Session.Model.BasicPublish("", @event.BasicProperties.ReplyTo, false, props, body);
+                Session.Model.BasicPublish("", @event.BasicProperties.ReplyTo, false, props, new ReadOnlyMemory<byte>(body));
             }
 
             return Task.CompletedTask;

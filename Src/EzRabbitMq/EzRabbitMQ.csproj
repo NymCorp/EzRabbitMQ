@@ -6,7 +6,7 @@
         <Description>RabbitMQ .Net client wrapper to simplify usage of rabbitMQ.</Description>
         <Version>6.2.2.2-alpha</Version>
         <GenerateDocumentationFile>true</GenerateDocumentationFile>
-        <PackageVersion>6.2.2.2-alpha</PackageVersion>
+        <PackageVersion>6.2.2.3</PackageVersion>
         <Title>EzRabbitMQ</Title>
         <Copyright>Licence Apache2</Copyright>
         <icon>https://github.com/NymCorp/EzRabbitMQ/raw/main/docs/images/logo.png</icon>
@@ -33,7 +33,7 @@
         <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="5.0.0" />
         <PackageReference Include="Microsoft.Extensions.Logging.Configuration" Version="5.0.0" />
         <PackageReference Include="Polly" Version="7.2.2" />
-        <PackageReference Include="RabbitMQ.Client" Version="[5.1.2,]" />
+        <PackageReference Include="RabbitMQ.Client" Version="[6.2.2,]" />
         <PackageReference Include="ReflectionAnalyzers" Version="0.1.22-dev">
           <PrivateAssets>all</PrivateAssets>
           <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
