@@ -1,4 +1,5 @@
-﻿using EzRabbitMQ.Exceptions;
+﻿using System.Threading;
+using EzRabbitMQ.Exceptions;
 using EzRabbitMQ.Resiliency;
 using Microsoft.Extensions.Logging;
 using RabbitMQ.Client;
@@ -11,6 +12,7 @@ namespace EzRabbitMQ
     {
         // ReSharper disable once PrivateFieldCanBeConvertedToLocalVariable
         private readonly IPollyService _pollyService;
+        private readonly CancellationTokenSource _cancellationTokenSource = new ();
 
         /// <summary>
         /// Connection Service
@@ -21,7 +23,7 @@ namespace EzRabbitMQ
         /// Logger
         /// </summary>
         protected readonly ILogger<SessionService> Logger;
-
+        
         /// <summary>
         /// Session Service
         /// </summary>
@@ -79,6 +81,8 @@ namespace EzRabbitMQ
             Model?.Dispose();
 
             Connection.Dispose();
+            
+            _cancellationTokenSource.Cancel();
         }
 
         /// <inheritdoc />
@@ -90,6 +94,9 @@ namespace EzRabbitMQ
             Connection.TryConnect();
             CreateChannel();
         }
+
+        /// <inheritdoc />
+        public CancellationToken SessionToken => _cancellationTokenSource.Token;
 
         private void CreateChannel()
         {

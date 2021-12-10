@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading;
 using EzRabbitMQ.Resiliency;
 using RabbitMQ.Client;
 
@@ -45,5 +46,10 @@ namespace EzRabbitMQ
         /// will be disposed and a new channel will be created
         /// </summary>
         void RefreshChannelIfClosed();
+        
+        /// <summary>
+        /// Session Cancellation Token, cancel on disconnection
+        /// </summary>
+        CancellationToken SessionToken { get; }
     }
 }

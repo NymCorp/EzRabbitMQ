@@ -329,6 +329,31 @@ var options = new ConsumerOptions
 };
 ```
 
+## Troubleshooting:
+
+If you implement constructor using `ILogger`, you must provide an Type for the ILogger.
+
+```text
+System.InvalidOperationException
+Unable to resolve service for type 'Microsoft.Extensions.Logging.ILogger' while attempting to activate 'EzRabbitMQ.Tests.CustomMailbox'.
+```
+
+E.g.:
+
+```C#
+public class CustomMailbox : MailboxBase
+{
+    public CustomMailbox(
+        ILogger<CustomMailbox> logger, 
+        IMailboxOptions options, 
+        ISessionService session, 
+        ConsumerOptions consumerOptions) 
+        : base(logger, options, session, consumerOptions)
+    {
+    }
+}
+```
+
 ## License
 
 [Open source licence Apache2](./license.txt)

@@ -15,25 +15,25 @@ namespace EzRabbitMQ.Reflection
 
         /// <summary>
         /// Find handle matching parameters filters and store the methodInfo in cache
-        /// to improve performance
+        /// to improve performance.
         /// </summary>
-        /// <param name="realImp">Type scanned to find method matching parameter type</param>
-        /// <param name="paramTypeText">Parameter type used to find method to call</param>
-        /// <param name="handleName">Name of the method you want to call</param>
-        /// <returns>MethodInfo matching parameters</returns>
-        /// <exception cref="ReflectionNotFoundTypeException"></exception>
-        /// <exception cref="ReflectionNotFoundHandleException"></exception>
-        public static MethodInfo FindMethodToInvoke(Type realImp, string paramTypeText, string handleName)
+        /// <param name="realImp">Type scanned to find method matching parameter type.</param>
+        /// <param name="paramTypeText">Parameter type used to find method to call.</param>
+        /// <param name="handleName">Name of the method you want to call.</param>
+        /// <returns>MethodInfo matching parameters.</returns>
+        public static MethodInfo? FindMethodToInvoke(Type realImp, string paramTypeText, string handleName)
         {
-            var key = $"{realImp.Name}-{paramTypeText}";
+            var key = $"{realImp.Name}-{paramTypeText}-{handleName}";
             
             if (HandleCache.Value.TryGetValue(key, out var handle)) return handle;
             
             var paramType = GetType(paramTypeText);
 
+            if (paramType is null) return null;
+
             var method = realImp.FindMatchingMethod(handleName, paramType);
 
-            if (method is null) throw new ReflectionNotFoundHandleException(realImp.Name, handleName, paramTypeText);
+            if (method is null) return null;
 
             HandleCache.Value[key] = method;
 
@@ -41,18 +41,17 @@ namespace EzRabbitMQ.Reflection
         }
 
         /// <summary>
-        /// Call GetType and cache the value
+        /// Call GetType and cache the value.
         /// </summary>
-        /// <param name="typeAssemblyQualifiedName">the assembly qualified of the type</param>
-        /// <returns>Found Type</returns>
-        /// <exception cref="ReflectionNotFoundTypeException"></exception>
-        public static Type GetType(string typeAssemblyQualifiedName)
+        /// <param name="typeAssemblyQualifiedName">the assembly qualified of the type.</param>
+        /// <returns>Nullable found type.</returns>
+        public static Type? GetType(string typeAssemblyQualifiedName)
         {
             if (TypeCache.Value.TryGetValue(typeAssemblyQualifiedName, out var cachedType)) return cachedType;
 
             var type = Type.GetType(typeAssemblyQualifiedName);
 
-            if (type is null) throw new ReflectionNotFoundTypeException(typeAssemblyQualifiedName);
+            if (type is null) return null;
 
             TypeCache.Value[typeAssemblyQualifiedName] = type;
 

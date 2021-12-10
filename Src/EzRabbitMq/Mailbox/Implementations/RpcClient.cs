@@ -44,7 +44,6 @@ namespace EzRabbitMQ
             return Task.Run(() => Call<T>(request, cancellationToken), cancellationToken);
         }
 
-
         /// <summary>
         /// Send request to the server and wait for a response.
         /// </summary>
@@ -55,10 +54,20 @@ namespace EzRabbitMQ
         /// <exception cref="RpcClientCastException">The response received doesnt match with the method argument T type</exception>
         public T? Call<T>(IRpcRequest request, CancellationToken externalCancellationToken = default) where T : class, IRpcResponse
         {
-           using var op = Session.Telemetry.Dependency(Options,
+            if (Session.Config.RpcPollyPolicy is not null)
+            {
+                return Session.Config.RpcPollyPolicy.ExecuteAsync(async () => (await CallInternal<T>(request, externalCancellationToken))!).GetAwaiter().GetResult() as T;
+            }
+            
+            return CallInternal<T>(request, externalCancellationToken).GetAwaiter().GetResult();
+        }
+
+        private Task<T?> CallInternal<T>(IRpcRequest request, CancellationToken externalCancellationToken = default) where T : class, IRpcResponse
+        {
+            using var op = Session.Telemetry.Dependency(Options,
                 "RpcClient request");
 
-           if (Session.Model is null) return default;
+            if (Session.Model is null) return Task.FromResult<T?>(default);
 
             var blockingColl = _listeners.GetOrAdd(typeof(T), new BlockingCollection<object>());
 
@@ -85,14 +94,16 @@ namespace EzRabbitMQ
 
                 Logger.LogDebug("Call {CorrelationId} took {Elapsed}ms", Options.CorrelationId, sw.ElapsedMilliseconds.ToString());
 
-                return (response as T ?? default) ?? throw new RpcClientCastException(typeof(T));
+                T typedResponse = (response as T) ?? throw new RpcClientCastException(typeof(T));
+                
+                return Task.FromResult<T?>(typedResponse);
             }
             catch (OperationCanceledException)
             {
                 Logger.LogWarning("RpcClient request has been cancelled after: {Timeout}ms for request: {Request}",
                     sw.ElapsedMilliseconds, JsonSerializer.Serialize(request));
 
-                return default;
+                return Task.FromResult<T?>(default);
             }
         }
 
@@ -109,6 +120,12 @@ namespace EzRabbitMQ
             var response = @event.GetData(Session.Config);
 
             var messageType = CachedReflection.GetType(@event.BasicProperties.Type);
+
+            if (messageType is null)
+            {
+                Logger.LogError("Unable to find the type used inside the event message in loaded assembly types");
+                return Task.CompletedTask;
+            }
 
             if (_listeners.TryGetValue(messageType, out var listener))
             {

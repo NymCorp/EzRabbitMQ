@@ -1,5 +1,4 @@
-﻿
-using System;
+﻿using System;
 using System.Collections.Concurrent;
 using System.Reflection;
 using System.Threading.Tasks;
@@ -29,6 +28,7 @@ namespace EzRabbitMQ
     public abstract class ConsumerHandleBase : IDisposable
     {
         private const string OnMessageHandleName = nameof(IMailboxHandler<object>.OnMessageHandle);
+        private const string OnMessageHandleAsyncName = nameof(IMailboxHandlerAsync<object>.OnMessageHandleAsync);
 
         /// <summary>
         /// Consumer tag
@@ -132,55 +132,65 @@ namespace EzRabbitMQ
         }
 
         private Task AsyncConsumer_Received(object? sender, BasicDeliverEventArgs @event)
-        { 
+        {
             using var operation = Session.Telemetry.Dependency(Options, "OnMessageHandle");
-            
+
             operation.Telemetry.Context.Operation.SetTelemetry(@event.BasicProperties);
 
             return MessageHandle(sender, @event);
         }
-        
+
         private void Consumer_Received(object? sender, BasicDeliverEventArgs @event)
         {
             AsyncConsumer_Received(sender, @event).GetAwaiter().GetResult();
         }
-        
+
         /// <summary>
-        /// Event raised on message received by the consumer
+        /// Event raised on message received by the consumer.
         /// </summary>
-        /// <param name="sender">Event sender</param>
-        /// <param name="event">RabbitMQ raw event</param>
-        protected virtual Task MessageHandle(object? sender, BasicDeliverEventArgs @event)
-        {   
+        /// <param name="sender">Event sender.</param>
+        /// <param name="event">RabbitMQ raw event.</param>
+        protected virtual async Task MessageHandle(object? sender, BasicDeliverEventArgs @event)
+        {
             var messageTypeText = @event.BasicProperties.Type;
 
-            try
+            var currentType = GetType();
+            var method = CachedReflection.FindMethodToInvoke(currentType, messageTypeText, OnMessageHandleName);
+            var asyncMethod = CachedReflection.FindMethodToInvoke(currentType, messageTypeText, OnMessageHandleAsyncName);
+            if (method is null && asyncMethod is null)
             {
-                var method = CachedReflection.FindMethodToInvoke(GetType(), messageTypeText, OnMessageHandleName);
-
-                var message = @event.GetMessage(Session.Config);
-
-                TryExecuteOnMessage(@event, message, method);
-            }
-            catch (ReflectionNotFoundTypeException e)
-            {
-                Logger.LogError(e, "Not found type exception");
-                Session.Model?.BasicReject(@event.DeliveryTag, false);
-            }
-            catch (ReflectionNotFoundHandleException e)
-            {
-                Logger.LogError(e, "Not found handle exception");
-                Session.Model?.BasicReject(@event.DeliveryTag, false);
+                Logger.LogError("Not found handle exception");
+                return;
             }
 
-            return Task.CompletedTask;
+            var message = @event.GetMessage(Session.Config);
+
+            await TryExecuteOnMessage(@event, message, method, asyncMethod);
         }
 
-        private void TryExecuteOnMessage(BasicDeliverEventArgs @event, object message, MethodBase invoker)
+        private async Task TryExecuteOnMessage(BasicDeliverEventArgs @event, object message, MethodBase? method, MethodInfo? asyncMethod)
         {
             try
             {
-                invoker.Invoke(this, new[] {message});
+                if (asyncMethod is not null)
+                {
+                    var task = asyncMethod.Invoke(this, new[] {message, Session.SessionToken});
+                    if (task is not null)
+                    {
+                        await (dynamic) task;
+                    }
+                }
+                else
+                {
+                    if (method is null)
+                    {
+                        Logger.LogError("Unable to find any matching method called: {MethodName} in your implementation : {ImplementationName}", OnMessageHandleName, GetType().Name);
+                        HandleOnMessageException(@event);
+                        return;
+                    }
+                    
+                    method.Invoke(this, new[] {message});
+                }
 
                 if (!ConsumerOptions.AutoAck)
                 {
@@ -207,10 +217,10 @@ namespace EzRabbitMQ
         private Task AsyncConsumer_ConsumerCancelled(object? sender, ConsumerEventArgs e)
         {
             Session.Telemetry.Trace("Consumer cancelled", new() {{"consumerTag", ConsumerTag}});
-            
+
             return Task.CompletedTask;
         }
-        
+
         private void Consumer_ConsumerCancelled(object? sender, ConsumerEventArgs e)
         {
             AsyncConsumer_ConsumerCancelled(sender, e).Wait();
@@ -223,7 +233,7 @@ namespace EzRabbitMQ
                 Logger.LogError("Consumer shutdown : {ReplyText}", e.ReplyText);
 
                 CreateConsumer();
-                
+
                 return Task.CompletedTask;
             }
 
@@ -233,7 +243,7 @@ namespace EzRabbitMQ
 
             return Task.CompletedTask;
         }
-        
+
         private void Consumer_Shutdown(object? sender, ShutdownEventArgs e)
         {
             AsyncConsumer_Shutdown(sender, e).Wait();
@@ -244,10 +254,10 @@ namespace EzRabbitMQ
             Session.Telemetry.Trace("Consumer unregistered", new() {{"consumerTag", ConsumerTag}});
 
             Logger.LogDebug("Consumer unregistered : {ConsumerTag}", ConsumerTag);
-            
+
             return Task.CompletedTask;
         }
-        
+
         private void Consumer_Unregistered(object? sender, ConsumerEventArgs e)
         {
             AsyncConsumer_Unregistered(sender, e).Wait();
