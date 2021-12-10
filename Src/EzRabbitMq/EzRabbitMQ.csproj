@@ -20,7 +20,6 @@
         <Nullable>enable</Nullable>
         <Authors>NymCorp</Authors>
         <License>https://raw.githubusercontent.com/NymCorp/EzRabbitMQ/main/license.txt</License>
-        <PackageIconUrl>https://github.com/NymCorp/EzRabbitMQ/raw/main/docs/images/logo.png</PackageIconUrl>
         <RepositoryUrl>https://github.com/NymCorp/EzRabbitMQ</RepositoryUrl>
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     </PropertyGroup>

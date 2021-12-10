@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using EzRabbitMQ.Exceptions;
 using EzRabbitMQ.Messages;
 using EzRabbitMQ.Reflection;
 using RabbitMQ.Client.Events;
@@ -16,14 +17,21 @@ namespace EzRabbitMQ.Extensions
         /// </summary>
         /// <param name="event">RabbitMQ event message</param>
         /// <param name="config">Current library config</param>
+        /// <exception cref="InvalidOperationException">Throw exception is deserialization fail</exception>
         /// <returns>Deserialized data</returns>
         public static object GetData(this BasicDeliverEventArgs @event, EzRabbitMQConfig config)
         {
             var messageType = CachedReflection.GetType(@event.BasicProperties.Type);
 
+            if (messageType is null)
+            {
+                throw new InvalidOperationException(
+                    $"Unable to deserialize message data to type: {messageType}");
+            }
+
             return config.DeserializeData(@event.Body.ToArray(), messageType)
                    ?? throw new InvalidOperationException(
-                       $"Unable to deserialize message data to type: {messageType}");
+                       $"Unable to deserialize message data to type: {messageType}");;
         }
 
         /// <summary>
@@ -31,10 +39,16 @@ namespace EzRabbitMQ.Extensions
         /// </summary>
         /// <param name="event">RabbitMQ event message</param>
         /// <param name="config">Current library config</param>
+        /// <exception cref="ReflectionNotFoundTypeException">Throw exception if message type is not found</exception>
         /// <returns>Return a <see cref="IMessage{T}"/></returns>
         public static object GetMessage(this BasicDeliverEventArgs @event, EzRabbitMQConfig config)
         {
             var messageType = CachedReflection.GetType(@event.BasicProperties.Type);
+
+            if (messageType is null)
+            {
+                throw new ReflectionNotFoundTypeException(@event.BasicProperties.Type);
+            }
 
             var obj = @event.GetData(config);
 

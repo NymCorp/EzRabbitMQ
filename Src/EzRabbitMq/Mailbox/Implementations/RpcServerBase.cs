@@ -15,6 +15,7 @@ namespace EzRabbitMQ
     public abstract class RpcServerBase : MailboxBase
     {
         private const string HandleName = nameof(IRpcServerHandle<EmptyRpcResponse, EmptyRpcRequest>.Handle);
+        private const string HandleAsyncName = nameof(IRpcServerHandleAsync<EmptyRpcResponse, EmptyRpcRequest>.HandleAsync);
 
         /// <inheritdoc />
         protected RpcServerBase(
@@ -28,14 +29,14 @@ namespace EzRabbitMQ
         }
 
         /// <inheritdoc />
-        protected override Task MessageHandle(object? sender, BasicDeliverEventArgs @event)
+        protected override async Task MessageHandle(object? sender, BasicDeliverEventArgs @event)
         {
             var replyProps = Session.Model?.CreateBasicProperties();
 
             if (replyProps is null)
             {
                 Logger.LogError("Unable to create message properties from current connection channel");
-                return Task.CompletedTask;
+                return;
             }
 
             replyProps.CorrelationId = @event.BasicProperties.CorrelationId;
@@ -43,10 +44,23 @@ namespace EzRabbitMQ
             var messageType = @event.BasicProperties.Type;
 
             var method = CachedReflection.FindMethodToInvoke(GetType(), messageType, HandleName);
+            var asyncMethod = CachedReflection.FindMethodToInvoke(GetType(), messageType, HandleAsyncName);
 
             var obj = @event.GetData(Session.Config);
 
-            var response = method.Invoke(this, new[] {obj});
+            object? response = null;
+            if (asyncMethod is not null)
+            {
+                var task = asyncMethod.Invoke(this, new[] {obj, Session.SessionToken});
+                if (task is not null)
+                {
+                    response = await (dynamic) task;
+                }
+            }
+            else if (method is not null)
+            {
+                response = method.Invoke(this, new[] {obj});
+            }
 
             if (response is not null && Session.Model is not null)
             {
@@ -54,11 +68,9 @@ namespace EzRabbitMQ
                 var body = Session.Config.SerializeData(response);
                 props.CorrelationId = @event.BasicProperties.CorrelationId;
                 props.Type = response.GetType().AssemblyQualifiedName;
-                
+
                 Session.Model.BasicPublish("", @event.BasicProperties.ReplyTo, false, props, new ReadOnlyMemory<byte>(body));
             }
-
-            return Task.CompletedTask;
         }
     }
 }

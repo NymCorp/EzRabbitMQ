@@ -83,7 +83,7 @@ namespace EzRabbitMQ.Tests
         [Fact]
         public void CanDoTimeout()
         {
-            var (mailbox, _, _) = TestUtils.Build<RpcTests>(_output);
+            var (mailbox, _, _) = TestUtils.Build<RpcTests>(_output, true);
 
             using var client = mailbox.RpcClient();
 
@@ -97,21 +97,21 @@ namespace EzRabbitMQ.Tests
         [Fact]
         public void CanUseMultipleRpcServer()
         {
-            var (mailbox, _, _) = TestUtils.Build<RpcTests>(_output);
+            var (mailbox, _, _) = TestUtils.Build<RpcTests>(_output, true);
 
-            //using var serverA = mailbox.RpcServer<RpcServerTest>();
+            using var serverA = mailbox.RpcServer<RpcServerTest>();
             using var serverB = mailbox.RpcServer<RpcServerTest>("serverB");
 
-            //using var client = mailbox.RpcClient();
+            using var client = mailbox.RpcClient();
             using var clientB = mailbox.RpcClient("serverB");
 
-            //var messageA = Guid.NewGuid().ToString();
+            var messageA = Guid.NewGuid().ToString();
             var messageB = Guid.NewGuid().ToString();
 
             var responseB = clientB.Call<RpcSampleResponse>(new RpcSampleRequest {Text = messageB});
-            //var response = client.Call<RpcSampleResponse>(new RpcSampleRequest {Text = messageA});
+            var response = client.Call<RpcSampleResponse>(new RpcSampleRequest {Text = messageA});
 
-            //Assert.Equal(messageA, response?.Model.Text);
+            Assert.Equal(messageA, response?.Model.Text);
             Assert.Equal(messageB, responseB?.Model.Text);
         }
         
@@ -123,16 +123,16 @@ namespace EzRabbitMQ.Tests
             using var serverA = mailbox.RpcServer<RpcServerTest>();
 
             using var client = mailbox.RpcClient();
-            //using var clientB = mailbox.RpcClient();
+            using var clientB = mailbox.RpcClient();
 
             var messageA = Guid.NewGuid().ToString();
-            //var messageB = Guid.NewGuid().ToString();
+            var messageB = Guid.NewGuid().ToString();
 
-            //var responseB = clientB.Call<RpcSampleResponse>(new RpcSampleRequest {Text = messageB});
+            var responseB = clientB.Call<RpcSampleResponse>(new RpcSampleRequest {Text = messageB});
             var response = client.Call<RpcSampleResponse>(new RpcSampleRequest {Text = messageA});
 
             Assert.Equal(messageA, response?.Model.Text);
-            //Assert.Equal(messageB, responseB?.Model.Text);
+            Assert.Equal(messageB, responseB?.Model.Text);
         }
 
         [Fact]

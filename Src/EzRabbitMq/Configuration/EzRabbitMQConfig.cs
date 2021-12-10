@@ -16,11 +16,16 @@ namespace EzRabbitMQ
         /// Polly policy used for rabbitmq client/server requests.
         /// </summary>
         public AsyncRetryPolicy PollyPolicy { get; private set; } =
-            Policy
-                .Handle<Exception>()
+            Policy.Handle<Exception>()
                 .WaitAndRetryAsync(5, retryAttempt =>
                     TimeSpan.FromSeconds(Math.Pow(2, retryAttempt))
                 );
+
+        /// <summary>
+        /// Rpc Polly policy used for rabbitmq client/server requests.
+        /// default to no retry policy
+        /// </summary>
+        public AsyncRetryPolicy<object>? RpcPollyPolicy { get; private set; }
 
         /// <summary>
         /// Is async dispatcher or sync dispatcher, default value to false, async dispatcher doesnt guarantee message order.
@@ -77,6 +82,16 @@ namespace EzRabbitMQ
         public void ConfigurePollyPolicy(AsyncRetryPolicy policy)
         {
             PollyPolicy = policy;
+        }
+        
+        /// <summary>
+        /// Override the current Rpc polly policy, this policy is used to wrap all rabbitMQ calls.
+        /// Default to no retry policy, set to null to disable retry explicitly.
+        /// </summary>
+        /// <param name="policy">Polly policy to set.</param>
+        public void ConfigureRpcPollyPolicy(AsyncRetryPolicy<object>? policy)
+        {
+            RpcPollyPolicy = policy;
         }
 
         /// <summary>

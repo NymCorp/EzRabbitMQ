@@ -24,7 +24,7 @@ namespace EzRabbitMQ.Resiliency
         /// <inheritdoc />
         public void Execute(Action action)
         {
-            ExecuteAsync(() => RunPolicy(action)).Wait();
+            ExecuteAsync(() => RunPolicy(action)).GetAwaiter().GetResult();
         }
 
         /// <inheritdoc />

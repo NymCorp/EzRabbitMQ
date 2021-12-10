@@ -24,7 +24,7 @@ namespace EzRabbitMQ.Reflection
             return type.GetGenericArguments().FirstOrDefault();
         }
 
-        public static MethodInfo FindMatchingMethod(this Type type, string methodName, Type messageType)
+        public static MethodInfo? FindMatchingMethod(this Type type, string methodName, Type messageType)
         {
             var methods = type.FindMethods(methodName);
 
@@ -38,8 +38,7 @@ namespace EzRabbitMQ.Reflection
                     select (priority, method))
                 .OrderBy(m => m.priority)
                 .Select(m => m.method)
-                .FirstOrDefault()
-                ?? throw new ReflectionNotFoundHandleException(type.Name, methodName, messageType.Name);
+                .FirstOrDefault();
         }
     }
 }
