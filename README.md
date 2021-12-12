@@ -15,7 +15,7 @@ When you create a `Mailbox` you can specify the `ConsumerOptions` allowing you t
 
 ### Install
 
-`dotnet add package EzRabbitMQ --prerelease`
+`dotnet add package EzRabbitMQ`
 
 ### Register services EzRabbitMQ services :
 
