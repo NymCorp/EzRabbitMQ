@@ -103,17 +103,17 @@ You can implement a `RpcServer` that will receive `IRpcRequest` from a `RpcClien
 ```c#
 // your implementation or RpcServerBase
 public class IncrementRpcServer: RpcServerBase, 
-    IRpcServerHandle<RpcIncrementResponse, RpcIncrementRequest>
+    IRpcServerHandleAsync<RpcIncrementResponse, RpcIncrementRequest>
 {
     public IncrementRpcServer(ILogger<IncrementRpcServer> logger, IMailboxOptions options, ISessionService session, IProducerService producerService, ConsumerOptions consumerOptions) 
     : base(logger, options, session, producerService, consumerOptions)
     {
     }
 
-    public RpcIncrementResponse Handle(RpcIncrementRequest request)
+    public Task<RpcIncrementResponse> HandleAsync(RpcIncrementRequest request, CancellationToken cancellationToken)
     {
         Logger.LogInformation("rpc received");
-        return new RpcIncrementResponse(request.CurrentValue +1);
+        return Task.FromResult(new RpcIncrementResponse(request.CurrentValue +1));
     }
 }
 
@@ -121,6 +121,7 @@ using var rpcServer = _mailboxService.RpcServer<IncrementRpcServer>();
 
 using var rpcClient = _mailboxService.RpcClient();
 
+// CallAsync will return a task that will be completed when the response is received
 var response = _rpcClient.Call<RpcIncrementResponse>(new RpcIncrementRequest(1));
 // response.NewValue = 2
 
@@ -135,8 +136,8 @@ record WiseChildGiftRequest(string Name);
 record NotWiseChildGiftRequest(string Name);
 
 public class SantaMailbox : MailboxBase,
-    IMailboxHandler<WiseChildGiftRequest>,
-    IMailboxHandler<NotWiseChildGiftRequest>
+    IMailboxHandler<WiseChildGiftRequest>, // sync handle
+    IMailboxHandlerAsync<NotWiseChildGiftRequest> // async handle
 {
     private readonly ILogger<TodoMailbox> _logger;
 
@@ -147,9 +148,10 @@ public class SantaMailbox : MailboxBase,
         _logger.LogInformation("Received request from wise child");
     }
 
-    public void OnMessageHandle(IMessage<NotWiseChildGiftRequest> message)
+    public Task OnMessageHandleAsync(IMessage<NotWiseChildGiftRequest> message, CancellationToken cancellationToken)
     {
         _logger.LogInformation("Received request from not wise child");
+        return Task.CompletedTask;
     }
 }
 
@@ -224,6 +226,19 @@ services.AddEzRabbitMQ(config =>
 });
 ```
 
+### RPC Polly retry policy
+
+You can override the retry policy of RPC calls using :
+
+```c#
+// your service provider
+services.AddEzRabbitMQ(config =>
+{
+    config.ConfigureRpcPollyPolicy(Policy.HandleResult<object>(d => d is null)
+                            .WaitAndRetryAsync(1, i => TimeSpan.FromSeconds(Math.Pow(2, i))));
+});
+```
+
 ### RabbitMQ Connection
 
 You can modify the current connectionFactory or you can create a connection and
@@ -234,7 +249,7 @@ services.AddEzRabbitMQ(config =>
 {
     config.ConfigureConnection(c =>
     {
-        c.Uri = new Uri("https://localhost:");
+        c.Uri = new Uri("rabbitmq-server:15672");
         return c;
     });
 

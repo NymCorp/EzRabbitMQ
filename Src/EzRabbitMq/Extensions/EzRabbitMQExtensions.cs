@@ -2,6 +2,8 @@
 using EzRabbitMQ.Resiliency;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using RabbitMQ.Client;
 
 namespace EzRabbitMQ
@@ -43,22 +45,22 @@ namespace EzRabbitMQ
             return services;
         }
 
-        // todo: this bind to .net 5 too hard, trying to find another way to provide dynamic loglevel at runtime
-        // /// <summary>
-        // /// You can useEzRabbitMQ for additional configuration options
-        // /// If you call UseEzRabbitMQ your configuration will be read to find an override of the log level
-        // /// </summary>
-        // /// <param name="builder"><see cref="IHostBuilder"/></param>
-        // /// <returns><see cref="IHostBuilder"/></returns>
-        // public static IHostBuilder UseEzRabbitMQ(this IHostBuilder builder)
-        // {
-        //     return builder.ConfigureLogging((context, logger) =>
-        //     {
-        //         if (context.Configuration.TryGetEnum<LogLevel>(ConfigurationKeys.LogLevelKey, out var level))
-        //         {
-        //             logger.SetMinimumLevel(level);
-        //         }
-        //     });
-        // }
+        /// <summary>
+        /// You can useEzRabbitMQ for additional configuration options
+        /// If you call UseEzRabbitMQ your configuration will be read to find an override of the log level
+        /// </summary>
+        /// <param name="builder"><see cref="IHostBuilder"/></param>
+        /// <returns><see cref="IHostBuilder"/></returns>
+        // ReSharper disable once InconsistentNaming
+        public static IHostBuilder UseEzRabbitMQ(this IHostBuilder builder)
+        {
+            return builder.ConfigureLogging((context, logger) =>
+            {
+                if (context.Configuration.TryGetEnum<LogLevel>(ConfigurationKeys.LogLevelKey, out var level))
+                {
+                    logger.SetMinimumLevel(level);
+                }
+            });
+        }
     }
 }
