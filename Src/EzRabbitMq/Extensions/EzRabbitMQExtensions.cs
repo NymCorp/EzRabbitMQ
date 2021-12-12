@@ -44,7 +44,7 @@ namespace EzRabbitMQ
             
             return services;
         }
-
+#if NETCOREAPP
         /// <summary>
         /// You can useEzRabbitMQ for additional configuration options
         /// If you call UseEzRabbitMQ your configuration will be read to find an override of the log level
@@ -62,5 +62,6 @@ namespace EzRabbitMQ
                 }
             });
         }
+#endif
     }
 }

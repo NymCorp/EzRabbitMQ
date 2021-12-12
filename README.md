@@ -26,8 +26,8 @@ services.AddEzRabbitMQ();
 
 ## Requirements:
 
-- .Net 5
-- Allow all current RabbitMQ Client from 5.1.2 to 6.2.2
+- .Net 5 / .Net Core 6
+- RabbitMQ Client version allowed from [6.2.2,]
 
 ## Usage:
 
@@ -102,6 +102,9 @@ You can implement a `RpcServer` that will receive `IRpcRequest` from a `RpcClien
 
 ```c#
 // your implementation or RpcServerBase
+public record RpcIncrementRequest(int CurrentValue);
+public record RpcIncrementResponse(int NewValue);
+
 public class IncrementRpcServer: RpcServerBase, 
     IRpcServerHandleAsync<RpcIncrementResponse, RpcIncrementRequest>
 {
@@ -124,7 +127,6 @@ using var rpcClient = _mailboxService.RpcClient();
 // CallAsync will return a task that will be completed when the response is received
 var response = _rpcClient.Call<RpcIncrementResponse>(new RpcIncrementRequest(1));
 // response.NewValue = 2
-
 ```
 
 ### Create and receive multiple messages

@@ -53,7 +53,7 @@ producerService.DirectSend("b",  new Sample("Toto", 42));
 using var rpcClient = mailboxService.RpcClient();
 using var rpcServer = mailboxService.RpcServer<IncRpcServer>();
 
-var response = rpcClient.Call<RpcIncrementResponse>(new RpcIncrementRequest{CurrentValue = 42});
+var response = rpcClient.Call<RpcIncrementResponse>(new RpcIncrementRequest(42));
 
 Console.WriteLine($"rpc response: {response?.NewValue.ToString() ?? "null"}");
 

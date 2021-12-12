@@ -13,9 +13,6 @@ public class IncRpcServer : RpcServerBase, IRpcServerHandleAsync<RpcIncrementRes
 
     public Task<RpcIncrementResponse> HandleAsync(RpcIncrementRequest request, CancellationToken cancellationToken)
     {
-        return Task.FromResult(new RpcIncrementResponse
-        {
-            NewValue = request.CurrentValue + 1
-        });
+        return Task.FromResult(new RpcIncrementResponse(request.CurrentValue + 1));
     }
 }

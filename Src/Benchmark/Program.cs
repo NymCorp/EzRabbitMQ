@@ -13,7 +13,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Benchmark
 {
-    [SimpleJob(RuntimeMoniker.Net50)]
+    [SimpleJob(RuntimeMoniker.Net60)]
     [MarkdownExporter, HtmlExporter]
     [MemoryDiagnoser]
     [ThreadingDiagnoser] 

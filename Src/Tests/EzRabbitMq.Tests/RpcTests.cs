@@ -144,7 +144,7 @@ namespace EzRabbitMQ.Tests
             using var serverA = mailbox.RpcServer<RpcServerTest>();
 
             var message = Guid.NewGuid().ToString();
-            var response = client.Call<RpcIncrementResponse>(new RpcIncrementRequest {CurrentValue = 1});
+            var response = client.Call<RpcIncrementResponse>(new RpcIncrementRequest(1));
             var response2 = client.Call<RpcSampleResponse>(new RpcSampleRequest {Text = message});
 
             Assert.Equal(2, response?.NewValue);
@@ -162,7 +162,7 @@ namespace EzRabbitMQ.Tests
 
             for (var i = 0; i < 100; i++)
             {
-                var response = client.Call<RpcIncrementResponse>(new RpcIncrementRequest {CurrentValue = i});
+                var response = client.Call<RpcIncrementResponse>(new RpcIncrementRequest(i));
                 Assert.Equal(i + 1, response?.NewValue);
             }
         }
@@ -189,7 +189,7 @@ namespace EzRabbitMQ.Tests
             using var client = mailbox.RpcClient();
             
             var unexpectedResponse = client.Call<RpcUnexpectedResponse>(new RpcUnexpectedRequest());
-            var response = client.Call<RpcIncrementResponse>(new RpcIncrementRequest {CurrentValue = 0});
+            var response = client.Call<RpcIncrementResponse>(new RpcIncrementRequest(0));
 
             Assert.Equal(1, response?.NewValue);
             Assert.Null(unexpectedResponse);

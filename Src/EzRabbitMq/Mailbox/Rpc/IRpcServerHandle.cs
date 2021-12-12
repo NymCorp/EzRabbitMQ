@@ -4,13 +4,11 @@ using System.Threading.Tasks;
 namespace EzRabbitMQ
 {
     /// <summary>
-    /// Adding an Handle method on your RpcServer to receive IRpcRequest
+    /// Adding an Handle method on your RpcServer to receive a TResponse
     /// </summary>
     /// <typeparam name="TResponse">The response type returned for the request TRequest</typeparam>
     /// <typeparam name="TRequest">The request type to receive</typeparam>
     public interface IRpcServerHandle<TResponse, in TRequest>
-        where TResponse : IRpcResponse
-        where TRequest : IRpcRequest
     {
         /// <summary>
         /// Handle called when a request is received
@@ -21,13 +19,11 @@ namespace EzRabbitMQ
     }
     
     /// <summary>
-    /// Adding an async Handle method on your RpcServer to receive IRpcRequest
+    /// Adding an async Handle method on your RpcServer to receive TResponse
     /// </summary>
     /// <typeparam name="TResponse">The response type returned for the request TRequest</typeparam>
     /// <typeparam name="TRequest">The request type to receive</typeparam>
     public interface IRpcServerHandleAsync<TResponse, in TRequest>
-        where TResponse : IRpcResponse
-        where TRequest : IRpcRequest
     {
         /// <summary>
         /// Handle called when a request is received
