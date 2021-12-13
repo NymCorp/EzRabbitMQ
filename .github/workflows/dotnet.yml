@@ -30,6 +30,6 @@ jobs:
     - name: Publish NuGet
       uses: brandedoutcast/publish-nuget@v2.5.5
       with:
-        PROJECT_FILE_PATH: ./Src/EzRabbitMQ/EzRabbitMQ.csproj
+        PROJECT_FILE_PATH: ./Src/EzRabbitMq/EzRabbitMQ.csproj
         NUGET_KEY: $NUGET_TOKEN
    
