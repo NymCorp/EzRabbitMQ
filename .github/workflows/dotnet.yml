@@ -27,5 +27,9 @@ jobs:
         RABBITMQ_TAG: '3-management-alpine'
     - name: Unittests
       uses: zyborg/dotnet-tests-report@ce730c068bb73480dcb37c02d40890bf8b44c953
-   
+    - name: Publish NuGet
+      uses: brandedoutcast/publish-nuget@v2.5.5
+      with:
+        PROJECT_FILE_PATH: ./src/EzRabbitMQ/EzRabbitMQ.csproj
+        NUGET_KEY: $NUGET_TOKEN
    
