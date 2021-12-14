@@ -1,4 +1,3 @@
-﻿
 using System;
 using System.Collections.Concurrent;
 using System.Diagnostics;
@@ -38,8 +37,8 @@ namespace EzRabbitMQ
         /// </summary>
         /// <param name="request">Request for the rpc server</param>
         /// <param name="cancellationToken">Cancellation Token</param>
-        /// <returns>Task of nullable <see cref="IRpcResponse"/></returns>
-        public Task<T?> CallAsync<T>(IRpcRequest request, CancellationToken cancellationToken) where T : class, IRpcResponse
+        /// <returns>Task of nullable</returns>
+        public Task<T?> CallAsync<T>(object request, CancellationToken cancellationToken) where T : class
         {
             return Task.Run(() => Call<T>(request, cancellationToken), cancellationToken);
         }
@@ -47,12 +46,12 @@ namespace EzRabbitMQ
         /// <summary>
         /// Send request to the server and wait for a response.
         /// </summary>
-        /// <param name="request">IRpcRequest you want to send to the server</param>
+        /// <param name="request">Request object you want to send to the server</param>
         /// <param name="externalCancellationToken">Optional CancellationToken preventing from waiting until request timeout if cancellation is raised</param>
         /// <typeparam name="T">IRpcResponse type</typeparam>
         /// <returns>Nullable IRpcResponse</returns>
         /// <exception cref="RpcClientCastException">The response received doesnt match with the method argument T type</exception>
-        public T? Call<T>(IRpcRequest request, CancellationToken externalCancellationToken = default) where T : class, IRpcResponse
+        public T? Call<T>(object request, CancellationToken externalCancellationToken = default) where T : class
         {
             if (Session.Config.RpcPollyPolicy is not null)
             {
@@ -62,7 +61,7 @@ namespace EzRabbitMQ
             return CallInternal<T>(request, externalCancellationToken).GetAwaiter().GetResult();
         }
 
-        private Task<T?> CallInternal<T>(IRpcRequest request, CancellationToken externalCancellationToken = default) where T : class, IRpcResponse
+        private Task<T?> CallInternal<T>(object request, CancellationToken externalCancellationToken = default) where T : class
         {
             using var op = Session.Telemetry.Dependency(Options,
                 "RpcClient request");

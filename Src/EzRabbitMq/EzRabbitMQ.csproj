@@ -4,9 +4,9 @@
         <OutputType>Library</OutputType>
         <RootNamespace>EzRabbitMQ</RootNamespace>
         <Description>RabbitMQ .Net client wrapper to simplify usage of rabbitMQ.</Description>
-        <Version>6.2.2.6</Version>
+        <Version>6.2.2.7</Version>
         <GenerateDocumentationFile>true</GenerateDocumentationFile>
-        <PackageVersion>6.2.2.6</PackageVersion>
+        <PackageVersion>6.2.2.7</PackageVersion>
         <Title>EzRabbitMQ</Title>
         <Copyright>Licence Apache2</Copyright>
         <icon>https://github.com/NymCorp/EzRabbitMQ/raw/main/docs/images/logo.png</icon>
@@ -15,7 +15,7 @@
         <Product>EzRabbitMQ</Product>
         <PublishRepositoryUrl>true</PublishRepositoryUrl>
         <IncludeSymbols>true</IncludeSymbols>
-        <TargetFrameworks>net5.0</TargetFrameworks>
+        <TargetFrameworks>net5.0;net6.0</TargetFrameworks>
         <LangVersion>preview</LangVersion>
         <Nullable>enable</Nullable>
         <Authors>NymCorp</Authors>
@@ -28,6 +28,7 @@
         <PackageReference Include="FluentValidation" Version="[9.3.0,]" />
         <PackageReference Include="Microsoft.ApplicationInsights" Version="[2.18.0,]" />
         <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="[5.0.0,]" />
+        <PackageReference Include="Microsoft.Extensions.Hosting" Version="[5.0.0,]" />
         <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="[5.0.0,]" />
         <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="[5.0.0,]" />
         <PackageReference Include="Microsoft.Extensions.Logging.Configuration" Version="[5.0.0,]" />

@@ -1,4 +1,4 @@
 ﻿namespace EzRabbitMQ.Tests.Messages
 {
-    public record RpcUnexpectedRequest: IRpcRequest;
+    public record RpcUnexpectedRequest;
 }

@@ -33,10 +33,7 @@ namespace EzRabbitMQ.Tests
 
         public Task<RpcIncrementResponse> HandleAsync(RpcIncrementRequest request, CancellationToken cancellationToken = default)
         {
-            return Task.FromResult(new RpcIncrementResponse()
-            {
-                NewValue = request.CurrentValue + 1
-            });
+            return Task.FromResult(new RpcIncrementResponse(request.CurrentValue + 1));
         }
     }
 }

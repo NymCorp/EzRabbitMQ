@@ -43,8 +43,9 @@ namespace EzRabbitMQ
 
             var messageType = @event.BasicProperties.Type;
 
-            var method = CachedReflection.FindMethodToInvoke(GetType(), messageType, HandleName);
-            var asyncMethod = CachedReflection.FindMethodToInvoke(GetType(), messageType, HandleAsyncName);
+            var currentType = GetType();
+            var method = CachedReflection.FindMethodToInvoke(currentType, messageType, HandleName);
+            var asyncMethod = CachedReflection.FindMethodToInvoke(currentType, messageType, HandleAsyncName);
 
             var obj = @event.GetData(Session.Config);
 
