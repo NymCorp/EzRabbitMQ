@@ -39,9 +39,5 @@ namespace EzRabbitMQ.Reflection
                 .Select(m => m.method)
                 .FirstOrDefault();
         }
-
-#if NETCOREAPP3_1
-        public static bool IsAssignableTo(this Type @this, [NotNullWhen(true)] Type? targetType) => targetType?.IsAssignableFrom(@this) ?? false;
-#endif
     }
 }
