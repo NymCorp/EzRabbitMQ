@@ -8,7 +8,7 @@ using Xunit.Abstractions;
 
 namespace EzRabbitMQ.Tests
 {
-    public class ExceptionsClientTests
+    public class ExceptionsClientTests: TestBase
     {
         private const string RoutingKey1 = "test-routingKey1";
 
@@ -20,34 +20,39 @@ namespace EzRabbitMQ.Tests
 
         public ExceptionsClientTests(ITestOutputHelper output) => _output = output;
 
-        [Fact]
-        public async Task CanHandleException()
+        [Theory]
+        [MemberData(nameof(MailboxConfig))]
+        public async Task CanHandleException(bool isAsync)
         {
-            var (mailbox, producer, _) = TestUtils.Build<DirectClientTests>(_output);
+            var (mailbox, producer, _) = TestUtils.Build<DirectClientTests>(_output, isAsync: isAsync);
 
             using var consumer = mailbox.Create<Mailbox<TestSample>>(new DirectMailboxOptions(RoutingKey1, Guid.NewGuid().ToString()),
                 ConsumerOptions);
 
             var message = Guid.NewGuid().ToString();
 
-            bool called = false;
+            int cpt = 0;
             consumer.OnMessage += (_, _) =>
             {
-                called = true;
+                cpt++;
                 throw new Exception("test exception");
             };
-
-            producer.Send(ProducerRoutingKey1, new TestSample(message));
+            const int nbMessages = 10;
+            for(var i = 0; i < nbMessages; i++)
+            {
+                producer.Send(ProducerRoutingKey1, new TestSample(message));
+            }
 
             await Task.Delay(2000);
 
-            Assert.True(called);
+            Assert.Equal(nbMessages, cpt);
         }
 
-        [Fact]
-        public void ThrowUnderstandableExceptionOnBreakingChangeDetected()
+        [Theory]
+        [MemberData(nameof(MailboxConfig))]
+        public void ThrowUnderstandableExceptionOnBreakingChangeDetected(bool isAsync)
         {
-            var (mailbox, _, _) = TestUtils.Build<DirectClientTests>(_output);
+            var (mailbox, _, _) = TestUtils.Build<DirectClientTests>(_output, isAsync: isAsync);
 
             const string queueName = nameof(ThrowUnderstandableExceptionOnBreakingChangeDetected);
             using var _ = mailbox.Fanout<EmptyMessage>(queueName, consumerOptions: new ConsumerOptions
@@ -66,6 +71,23 @@ namespace EzRabbitMQ.Tests
             });
         }
         
-        // test Reflection.CachedReflection.GetType detect exception
+        [Theory]
+        [MemberData(nameof(MailboxConfig))]
+        public async Task ThrowReflectionExceptionWhenReceivingBadMessage(bool isAsync)
+        {
+            var (mailbox, producer, _) = TestUtils.Build<DirectClientTests>(_output, isAsync: isAsync);
+
+            using var consumer = mailbox.Create<Mailbox<TestSample>>(new DirectMailboxOptions(RoutingKey1, Guid.NewGuid().ToString()),
+                ConsumerOptions);
+
+            var called = false;
+            consumer.OnMessage += (_, _) => called = true;
+
+            producer.Send(ProducerRoutingKey1, new TestSample2());
+
+            await Task.Delay(2000);
+
+            Assert.False(called);
+        }
     }
 }

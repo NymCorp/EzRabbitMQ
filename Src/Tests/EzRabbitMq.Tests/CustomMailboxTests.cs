@@ -1,36 +1,14 @@
 using System;
-using System.Threading;
 using System.Threading.Tasks;
-using EzRabbitMQ.Messages;
 using EzRabbitMQ.Tests.Messages;
-using Microsoft.Extensions.Logging;
+using EzRabbitMQ.Tests.Models.CustomMailboxes;
 using Xunit;
 using Xunit.Abstractions;
 
 namespace EzRabbitMQ.Tests
 {
-    public class CustomMailbox : MailboxBase, IMailboxHandlerAsync<TestSample>, IMailboxHandler<TestSample2>
-    {
-        public bool AsyncCalled { get; private set; }
-        public bool SyncCalled { get; private set; }
-        
-        public CustomMailbox(ILogger<CustomMailbox> logger, IMailboxOptions options, ISessionService session, ConsumerOptions consumerOptions) : base(logger, options, session, consumerOptions)
-        {
-        }
-
-        public Task OnMessageHandleAsync(IMessage<TestSample> message, CancellationToken cancellationToken)
-        {
-            AsyncCalled = true;
-            return Task.CompletedTask;
-        }
-
-        public void OnMessageHandle(IMessage<TestSample2> message)
-        {
-            SyncCalled = true;
-        }
-    }
     
-    public class CustomClientTests
+    public class CustomClientTests: TestBase
     {
         private const string RoutingKey1 = "routingKey1";
 
@@ -40,10 +18,11 @@ namespace EzRabbitMQ.Tests
 
         public CustomClientTests(ITestOutputHelper output) => _output = output;
         
-        [Fact]
-        public async Task SendAndReceiveUsingManualCreator()
+        [Theory]
+        [MemberData(nameof(MailboxConfig))]
+        public async Task SendAndReceiveUsingManualCreator(bool isAsync)
         {
-            var (mailbox, producer, _) = TestUtils.Build<DirectClientTests>(_output);
+            var (mailbox, producer, _) = TestUtils.Build<DirectClientTests>(_output, isAsync: isAsync);
 
             var options = new DirectMailboxOptions(RoutingKey1, Guid.NewGuid().ToString());
 

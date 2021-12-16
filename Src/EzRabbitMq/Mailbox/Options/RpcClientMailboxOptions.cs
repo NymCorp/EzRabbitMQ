@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using FluentValidation;
 
 namespace EzRabbitMQ
 {
@@ -37,5 +38,10 @@ namespace EzRabbitMQ
 
         /// <inheritdoc />
         public Dictionary<string, string> SessionHeaders { get; } = new();
+    }
+    
+    // ReSharper disable once UnusedType.Global
+    internal class RpcClientMailboxOptionsValidator : AbstractValidator<RpcClientMailboxOptions>
+    {
     }
 }

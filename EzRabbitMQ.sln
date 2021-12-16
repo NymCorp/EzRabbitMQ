@@ -11,7 +11,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EzRabbitMQ.Tests", "Src\Tes
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Benchmark", "Src\Benchmark\Benchmark.csproj", "{FFDB58CD-1574-46B1-B728-10704CEEBD9D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ConsoleApp", "Src\Sample\ConsoleApp\ConsoleApp.csproj", "{412A3A4D-2A4F-497B-A3D2-99F60578C0E5}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebSample", "Src\Sample\WebSample\WebSample.csproj", "{93271A87-EF5C-4174-9269-23CA4E9B62FC}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -31,16 +31,16 @@ Global
 		{FFDB58CD-1574-46B1-B728-10704CEEBD9D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{FFDB58CD-1574-46B1-B728-10704CEEBD9D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{FFDB58CD-1574-46B1-B728-10704CEEBD9D}.Release|Any CPU.Build.0 = Release|Any CPU
-		{412A3A4D-2A4F-497B-A3D2-99F60578C0E5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{412A3A4D-2A4F-497B-A3D2-99F60578C0E5}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{412A3A4D-2A4F-497B-A3D2-99F60578C0E5}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{412A3A4D-2A4F-497B-A3D2-99F60578C0E5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{93271A87-EF5C-4174-9269-23CA4E9B62FC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{93271A87-EF5C-4174-9269-23CA4E9B62FC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{93271A87-EF5C-4174-9269-23CA4E9B62FC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{93271A87-EF5C-4174-9269-23CA4E9B62FC}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
-		{412A3A4D-2A4F-497B-A3D2-99F60578C0E5} = {77126D97-021F-4239-A50B-3D80F145F3EC}
+		{93271A87-EF5C-4174-9269-23CA4E9B62FC} = {77126D97-021F-4239-A50B-3D80F145F3EC}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {C4159B12-104F-4953-9343-0C91FF5A1BC6}

@@ -1,5 +1,6 @@
 using System;
 using System.Threading.Tasks;
+using System.Xml;
 using EzRabbitMQ.Tests.Messages;
 using FluentValidation;
 using Xunit;
@@ -7,7 +8,7 @@ using Xunit.Abstractions;
 
 namespace EzRabbitMQ.Tests
 {
-    public class TopicClientTests
+    public class TopicClientTests: TestBase
     {
         private const string RoutingKeyA = "root.a.*";
         private const string RoutingKeyB = "root.b.*";
@@ -21,10 +22,11 @@ namespace EzRabbitMQ.Tests
 
         public TopicClientTests(ITestOutputHelper output) => _output = output;
 
-        [Fact]
-        public async Task CanSendTopicMessageAndReceive()
+        [Theory]
+        [MemberData(nameof(MailboxConfig))]
+        public async Task CanSendTopicMessageAndReceive(bool isAsync)
         {
-            var (mailbox, producer, logger) = TestUtils.Build<TopicClientTests>(_output);
+            var (mailbox, producer, logger) = TestUtils.Build<TopicClientTests>(_output, isAsync:isAsync);
 
             using var consumer = mailbox.Topic<TestSample>(RoutingKeyA, consumerOptions: ConsumerOptions);
 
@@ -36,10 +38,11 @@ namespace EzRabbitMQ.Tests
             Assert.Equal(message, evt.Data.Text);
         }
 
-        [Fact]
-        public async Task CanSendTopicToMultipleReceivers()
+        [Theory]
+        [MemberData(nameof(MailboxConfig))]
+        public async Task CanSendTopicToMultipleReceivers(bool isAsync)
         {
-            var (mailbox, producer, logger) = TestUtils.Build<TopicClientTests>(_output);
+            var (mailbox, producer, logger) = TestUtils.Build<TopicClientTests>(_output, isAsync:isAsync);
 
             using var consumer = mailbox.Topic<TestSample>(RoutingKeyA, consumerOptions: ConsumerOptions);
             using var consumer2 = mailbox.Topic<TestSample>(RoutingKeyA, consumerOptions: ConsumerOptions);
@@ -57,10 +60,11 @@ namespace EzRabbitMQ.Tests
             Assert.Equal(message, evt2.Data.Text);
         }
 
-        [Fact]
-        public async Task MustNotSendMessageToAnotherQueue()
+        [Theory]
+        [MemberData(nameof(MailboxConfig))]
+        public async Task MustNotSendMessageToAnotherQueue(bool isAsync)
         {
-            var (mailbox, producer, logger) = TestUtils.Build<TopicClientTests>(_output);
+            var (mailbox, producer, logger) = TestUtils.Build<TopicClientTests>(_output, isAsync:isAsync);
 
             using var consumer = mailbox.Topic<TestSample>(RoutingKeyA, consumerOptions: ConsumerOptions);
             using var consumer2 = mailbox.Topic<TestSample>(RoutingKeyB, consumerOptions: ConsumerOptions);
@@ -77,10 +81,11 @@ namespace EzRabbitMQ.Tests
             Assert.Equal(message, evt.Data.Text);
         }
         
-        [Fact]
-        public void CanValidateInvalidRoutingKey()
+        [Theory]
+        [MemberData(nameof(MailboxConfig))]
+        public void CanValidateInvalidRoutingKey(bool isAsync)
         {
-            var (_,producer, _) = TestUtils.Build<TopicClientTests>(_output);
+            var (_,producer, _) = TestUtils.Build<TopicClientTests>(_output, isAsync:isAsync);
         
             Assert.Throws<ValidationException>(() =>
             {

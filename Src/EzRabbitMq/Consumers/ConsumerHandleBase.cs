@@ -19,7 +19,7 @@ namespace EzRabbitMQ
         /// <summary>
         /// Store a counter for each assembly to scope consumer with readable name
         /// </summary>
-        public static readonly ConcurrentDictionary<string, int> MailBoxIndexes = new();
+        public static readonly Lazy<ConcurrentDictionary<string, int>> MailBoxIndexes = new(() => new ConcurrentDictionary<string, int>());
     }
 
     /// <summary>
@@ -31,7 +31,7 @@ namespace EzRabbitMQ
         private const string OnMessageHandleAsyncName = nameof(IMailboxHandlerAsync<object>.OnMessageHandleAsync);
 
         /// <summary>
-        /// Consumer tag
+        /// Consumer tag, representing the unique consumer identifier
         /// </summary>
         protected readonly string ConsumerTag;
 
@@ -128,7 +128,7 @@ namespace EzRabbitMQ
 
         private void Consumer_Registered(object? sender, ConsumerEventArgs @event)
         {
-            AsyncConsumer_Registered(sender, @event).Wait();
+            AsyncConsumer_Registered(sender, @event).GetAwaiter().GetResult();
         }
 
         private Task AsyncConsumer_Received(object? sender, BasicDeliverEventArgs @event)
@@ -160,7 +160,7 @@ namespace EzRabbitMQ
             if (method is null && asyncMethod is null)
             {
                 Logger.LogError("Not found handle exception");
-                return;
+                throw new ReflectionNotFoundHandleException(GetType().Name, $"{OnMessageHandleName}|{OnMessageHandleAsyncName}", messageTypeText);
             }
 
             var message = @event.GetMessage(Session.Config);
@@ -223,7 +223,7 @@ namespace EzRabbitMQ
 
         private void Consumer_ConsumerCancelled(object? sender, ConsumerEventArgs e)
         {
-            AsyncConsumer_ConsumerCancelled(sender, e).Wait();
+            AsyncConsumer_ConsumerCancelled(sender, e).GetAwaiter().GetResult();
         }
 
         private Task AsyncConsumer_Shutdown(object? sender, ShutdownEventArgs e)
@@ -260,7 +260,7 @@ namespace EzRabbitMQ
 
         private void Consumer_Unregistered(object? sender, ConsumerEventArgs e)
         {
-            AsyncConsumer_Unregistered(sender, e).Wait();
+            AsyncConsumer_Unregistered(sender, e).GetAwaiter().GetResult();
         }
     }
 }

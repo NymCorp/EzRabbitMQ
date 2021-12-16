@@ -13,27 +13,20 @@ namespace EzRabbitMQ.Tests
 {
     public static class TestUtils
     {
-        public static (IMailboxService, IProducerService, ILogger<T>) Build<T>(ITestOutputHelper output, bool withRetry = false)
+        public static (IMailboxService, IProducerService, ILogger<T>) Build<T>(ITestOutputHelper output, bool withRetry = false, bool isAsync = true)
         {
             var sp = new ServiceCollection()
                 .AddSingleton(LogFactory.Create(output))
                 .AddLogging()
                 .AddSingleton<IRandomService, RandomService>()
+                .AddScoped<IAdditionService, AdditionService>()
                 .AddEzRabbitMQ(config =>
                 {
-                    config.IsAsyncDispatcher = true;
-
+                    config.IsAsyncDispatcher = isAsync;
                     if (withRetry)
                     {
                         config.ConfigureRpcPollyPolicy(Policy.HandleResult<object>(d => d is null)
                             .WaitAndRetryAsync(1, i => TimeSpan.FromSeconds(Math.Pow(2, i))));
-                    }
-
-                    output.WriteLine($"virtual host detected : {config.Connection.VirtualHost}");
-                    var cs = Environment.GetEnvironmentVariable("EzRabbitMQ__ConnectionString");
-                    if (!string.IsNullOrWhiteSpace(cs))
-                    {
-                        config.Connection.Uri = new Uri(cs);
                     }
                 })
                 .BuildServiceProvider();
@@ -44,7 +37,7 @@ namespace EzRabbitMQ.Tests
 
             return (mailbox, producer, logger);
         }
-
+        
         public static Task<IMessage<T>> Raises<T>(ILogger logger, Action<IMessage<T>> triggered, Mailbox<T> mailbox,
             int timeout = 10000)
         {

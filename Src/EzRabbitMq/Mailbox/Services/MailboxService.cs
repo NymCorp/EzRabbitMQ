@@ -23,15 +23,15 @@ namespace EzRabbitMQ
         }
 
         /// <inheritdoc />
-        public T Create<T>(IMailboxOptions options, ConsumerOptions? consumerOptions = null) where T : MailboxBase
+        public T Create<T>(IMailboxOptions options, ConsumerOptions? consumerOptions = null, IServiceProvider? customServiceProvider = null) where T : MailboxBase
         {
             consumerOptions ??= new ConsumerOptions();
             
-            return ActivatorUtilities.CreateInstance<T>(_serviceProvider, options, consumerOptions);
+            return ActivatorUtilities.CreateInstance<T>(customServiceProvider ?? _serviceProvider, options, consumerOptions);
         }
         
         /// <inheritdoc />
-        public Mailbox<T> Direct<T>(string routingKey, string? queueName = null, string? exchangeName = null, ConsumerOptions? consumerOptions = null)
+        public Mailbox<T> Direct<T>(string routingKey, string? queueName = null, string? exchangeName = null, ConsumerOptions? consumerOptions = null, IServiceProvider? customServiceProvider = null)
         {
             consumerOptions ??= new ConsumerOptions();
 
@@ -41,11 +41,11 @@ namespace EzRabbitMQ
 
             _validationService.ValidateAndThrow(options);
                 
-            return ActivatorUtilities.CreateInstance<Mailbox<T>>(_serviceProvider, options, consumerOptions);
+            return ActivatorUtilities.CreateInstance<Mailbox<T>>(customServiceProvider ?? _serviceProvider, options, consumerOptions);
         }
 
         /// <inheritdoc />
-        public Mailbox<T> Topic<T>(string routingKey, string? queueName = null, string? exchangeName = null, ConsumerOptions? consumerOptions = null)
+        public Mailbox<T> Topic<T>(string routingKey, string? queueName = null, string? exchangeName = null, ConsumerOptions? consumerOptions = null, IServiceProvider? customServiceProvider = null)
         {
             consumerOptions ??= new ConsumerOptions();
 
@@ -55,11 +55,11 @@ namespace EzRabbitMQ
             
             _validationService.ValidateAndThrow(options);
             
-            return ActivatorUtilities.CreateInstance<Mailbox<T>>(_serviceProvider, options, consumerOptions);
+            return ActivatorUtilities.CreateInstance<Mailbox<T>>(customServiceProvider ?? _serviceProvider, options, consumerOptions);
         }
 
         /// <inheritdoc />
-        public Mailbox<T> Fanout<T>(string? queueName = null, string? exchangeName = null, ConsumerOptions? consumerOptions = null)
+        public Mailbox<T> Fanout<T>(string? queueName = null, string? exchangeName = null, ConsumerOptions? consumerOptions = null, IServiceProvider? customServiceProvider = null)
         {
             consumerOptions ??= new ConsumerOptions();
 
@@ -69,11 +69,11 @@ namespace EzRabbitMQ
             
             _validationService.ValidateAndThrow(options);
             
-            return ActivatorUtilities.CreateInstance<Mailbox<T>>(_serviceProvider, options, consumerOptions);
+            return ActivatorUtilities.CreateInstance<Mailbox<T>>(customServiceProvider ?? _serviceProvider, options, consumerOptions);
         }
 
         /// <inheritdoc />
-        public Mailbox<T> Headers<T>(Dictionary<string, string> headers, XMatch xMatch, string? queueName = null, string? exchangeName = null, ConsumerOptions? consumerOptions = null)
+        public Mailbox<T> Headers<T>(Dictionary<string, string> headers, XMatch xMatch, string? queueName = null, string? exchangeName = null, ConsumerOptions? consumerOptions = null, IServiceProvider? customServiceProvider = null)
         {
             consumerOptions ??= new ConsumerOptions();
 
@@ -83,7 +83,7 @@ namespace EzRabbitMQ
             
             _validationService.ValidateAndThrow(options);
             
-            return ActivatorUtilities.CreateInstance<Mailbox<T>>(_serviceProvider, options, consumerOptions);
+            return ActivatorUtilities.CreateInstance<Mailbox<T>>(customServiceProvider ?? _serviceProvider, options, consumerOptions);
         }
 
         /// <inheritdoc />
@@ -104,7 +104,7 @@ namespace EzRabbitMQ
         }
 
         /// <inheritdoc />
-        public T RpcServer<T>(string? queueName = null, ConsumerOptions? consumerOptions = null) where T: RpcServerBase
+        public T RpcServer<T>(string? queueName = null, ConsumerOptions? consumerOptions = null, IServiceProvider? customServiceProvider = null) where T: RpcServerBase
         {
             consumerOptions ??= new ConsumerOptions
             {
@@ -115,8 +115,24 @@ namespace EzRabbitMQ
             var options = new RpcServerMailboxOptions(queueName);
             
             _validationService.ValidateAndThrow(options);
-
-            return ActivatorUtilities.CreateInstance<T>(_serviceProvider, options, consumerOptions);
+            
+            return ActivatorUtilities.CreateInstance<T>(customServiceProvider ?? _serviceProvider, options, consumerOptions);
+        }
+        
+        /// <inheritdoc />
+        public T RpcServerScoped<T>(string? queueName = null, ConsumerOptions? consumerOptions = null, IServiceProvider? customServiceProvider = null) where T: RpcServerBase
+        {
+            consumerOptions ??= new ConsumerOptions
+            {
+                QueueAutoDelete = true, QueueDurable = false,
+                AutoAck = true, QueueExclusive = true
+            };
+            
+            var options = new RpcServerMailboxOptions(queueName);
+            
+            _validationService.ValidateAndThrow(options);
+            
+            return ActivatorUtilities.CreateInstance<T>(customServiceProvider ?? _serviceProvider, options, consumerOptions);
         }
     }
 }

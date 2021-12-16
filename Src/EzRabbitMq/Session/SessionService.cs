@@ -1,4 +1,5 @@
-﻿using System.Threading;
+﻿using System;
+using System.Threading;
 using EzRabbitMQ.Exceptions;
 using EzRabbitMQ.Resiliency;
 using Microsoft.Extensions.Logging;
@@ -76,9 +77,15 @@ namespace EzRabbitMQ
         /// <inheritdoc />
         public void Dispose()
         {
-            Logger.LogDebug("Session disposed {ChannelNumber}", Model?.ChannelNumber);
+            try
+            {
+                Logger.LogDebug("Session disposed {ChannelNumber}", Model?.ChannelNumber);
 
-            Model?.Dispose();
+                Model?.Dispose();
+            }
+            catch (ObjectDisposedException) // ignored
+            {
+            }
 
             Connection.Dispose();
             

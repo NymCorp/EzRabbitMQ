@@ -1,4 +1,6 @@
-﻿namespace EzRabbitMQ
+﻿using FluentValidation;
+
+namespace EzRabbitMQ
 {
     /// <summary>
     /// Direct producer options
@@ -24,5 +26,15 @@
 
         /// <inheritdoc />
         public ProducerProperties Properties { get; } = new();
+    }
+
+    // ReSharper disable once UnusedType.Global
+    internal class DirectProducerOptionsValidator : AbstractValidator<DirectProducerOptions>
+    {
+        public DirectProducerOptionsValidator()
+        {
+            RuleFor(x => x.RoutingKey).NotNull().NotEmpty()
+                .WithMessage("Unable to send a direct message with null or empty routing key");
+        }
     }
 }
