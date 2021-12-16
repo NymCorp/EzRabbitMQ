@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 namespace EzRabbitMQ
 {
@@ -12,9 +13,10 @@ namespace EzRabbitMQ
         /// </summary>
         /// <param name="options">Mailbox options see <see cref="IMailboxOptions"/>.</param>
         /// <param name="consumerOptions">Consumer options see <see cref="ConsumerOptions"/>.</param>
+        /// <param name="customServiceProvider">Override the default service provider used, allowing you to control when dispose instances.</param>
         /// <typeparam name="T">Mailbox implementation.</typeparam>
         /// <returns>Disposable instance of mailbox.</returns>
-        T Create<T>(IMailboxOptions options, ConsumerOptions? consumerOptions = null) where T : MailboxBase;
+        T Create<T>(IMailboxOptions options, ConsumerOptions? consumerOptions = null, IServiceProvider? customServiceProvider = null) where T : MailboxBase;
 
         /// <summary>
         /// Create and return a Direct type mailbox.
@@ -23,9 +25,10 @@ namespace EzRabbitMQ
         /// <param name="queueName">Queue name, if not defined a uniq name is created.</param>
         /// <param name="exchangeName">Exchange name, a default value is provided based on the exchange type (direct).</param>
         /// <param name="consumerOptions">Consumer options.</param>
+        /// <param name="customServiceProvider">Override the default service provider used, allowing you to control when dispose instances.</param>
         /// <typeparam name="T">Data type you want to receive.</typeparam>
         /// <returns>Mailbox.</returns>
-        Mailbox<T> Direct<T>(string routingKey, string? queueName = null, string? exchangeName = null, ConsumerOptions? consumerOptions = null);
+        Mailbox<T> Direct<T>(string routingKey, string? queueName = null, string? exchangeName = null, ConsumerOptions? consumerOptions = null, IServiceProvider? customServiceProvider = null);
         
         
         /// <summary>
@@ -35,9 +38,10 @@ namespace EzRabbitMQ
         /// <param name="queueName">Queue name, if not defined a uniq name is created.</param>
         /// <param name="exchangeName">Exchange name, a default value is provided based on the exchange type (topic).</param>
         /// <param name="consumerOptions">Consumer options.</param>
+        /// /// <param name="customServiceProvider">Override the default service provider used, allowing you to control when dispose instances.</param>
         /// <typeparam name="T">Data type you want to receive.</typeparam>
         /// <returns>Mailbox.</returns>
-        Mailbox<T> Topic<T>(string routingKey, string? queueName = null, string? exchangeName = null, ConsumerOptions? consumerOptions = null);
+        Mailbox<T> Topic<T>(string routingKey, string? queueName = null, string? exchangeName = null, ConsumerOptions? consumerOptions = null, IServiceProvider? customServiceProvider = null);
 
         /// <summary>
         /// Create and return a Fanout mailbox.
@@ -45,9 +49,10 @@ namespace EzRabbitMQ
         /// <param name="queueName">Queue name, if not defined a uniq name is created.</param>
         /// <param name="exchangeName">Exchange name, a default value is provided based on the exchange type (fanout).</param>
         /// <param name="consumerOptions">Consumer options.</param>
+        /// <param name="customServiceProvider">Override the default service provider used, allowing you to control when dispose instances.</param>
         /// <typeparam name="T">Data type you want to receive.</typeparam>
         /// <returns>Mailbox.</returns>
-        Mailbox<T> Fanout<T>(string? queueName = null, string? exchangeName = null, ConsumerOptions? consumerOptions = null);
+        Mailbox<T> Fanout<T>(string? queueName = null, string? exchangeName = null, ConsumerOptions? consumerOptions = null, IServiceProvider? customServiceProvider = null);
 
         /// <summary>
         /// Create and return a Headers mailbox.
@@ -57,9 +62,10 @@ namespace EzRabbitMQ
         /// <param name="queueName">Queue name, if not defined a uniq name is created.</param>
         /// <param name="exchangeName">Exchange name, a default value is provided based on the exchange type (headers).</param>
         /// <param name="consumerOptions">Consumer options.</param>
+        /// <param name="customServiceProvider">Override the default service provider used, allowing you to control when dispose instances.</param>
         /// <typeparam name="T">Data type you want to receive.</typeparam>
         /// <returns>Headers.</returns>
-        Mailbox<T> Headers<T>(Dictionary<string, string> headers, XMatch xMatch, string? queueName = null, string? exchangeName = null, ConsumerOptions? consumerOptions = null);
+        Mailbox<T> Headers<T>(Dictionary<string, string> headers, XMatch xMatch, string? queueName = null, string? exchangeName = null, ConsumerOptions? consumerOptions = null, IServiceProvider? customServiceProvider = null);
 
         /// <summary>
         /// Create and return a RpcClient.
@@ -74,8 +80,9 @@ namespace EzRabbitMQ
         /// </summary>
         /// <param name="queueName">Override default queue name.</param>
         /// <param name="consumerOptions">Override default consumer Options.</param>
+        /// <param name="customServiceProvider">Override the default service provider used, allowing you to control when dispose instances.</param>
         /// <typeparam name="T">Implementation of RpcServerBase.</typeparam>
         /// <returns>Disposable instance of T.</returns>
-        T RpcServer<T>(string? queueName = null, ConsumerOptions? consumerOptions = null) where T : RpcServerBase;
+        T RpcServer<T>(string? queueName = null, ConsumerOptions? consumerOptions = null, IServiceProvider? customServiceProvider = null) where T : RpcServerBase;
     }
 }

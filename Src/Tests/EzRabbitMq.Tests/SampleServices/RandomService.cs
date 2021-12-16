@@ -2,6 +2,11 @@
 
 namespace EzRabbitMQ.Tests
 {
+    public interface IRandomService
+    {
+        int GetRandomInt();
+    }
+    
     public class RandomService: IRandomService
     {
         public int GetRandomInt()

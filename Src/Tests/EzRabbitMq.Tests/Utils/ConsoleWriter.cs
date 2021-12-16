@@ -7,14 +7,8 @@ namespace EzRabbitMQ.Tests
     {
         private readonly ITestOutputHelper _output;
 
-        public ConsoleWriter(ITestOutputHelper output)
-        {
-            _output = output;
-        }
+        public ConsoleWriter(ITestOutputHelper output) => _output = output;
 
-        public override void WriteLine(string m)
-        {
-            _output.WriteLine(m);
-        }
+        public override void WriteLine(string m) => _output.WriteLine(m);
     }
 }

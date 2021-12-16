@@ -15,15 +15,14 @@ namespace EzRabbitMQ
         {
             var entryName = Assembly.GetEntryAssembly()?.GetName().Name ?? "unknown-entry";
 
-            if (!AppState.MailBoxIndexes.ContainsKey(entryName))
+            if (!AppState.MailBoxIndexes.Value.ContainsKey(entryName))
             {
-                AppState.MailBoxIndexes.TryAdd(entryName, 0);
+                AppState.MailBoxIndexes.Value.TryAdd(entryName, 0);
             }
 
-            ++AppState.MailBoxIndexes[entryName];
+            ++AppState.MailBoxIndexes.Value[entryName];
 
-            return $"{entryName}({AppState.MailBoxIndexes[entryName]})";
+            return $"{entryName}({AppState.MailBoxIndexes.Value[entryName]})";
         }
-        
     }
 }

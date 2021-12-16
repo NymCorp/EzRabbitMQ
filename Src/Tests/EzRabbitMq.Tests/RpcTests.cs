@@ -6,16 +6,17 @@ using Xunit.Abstractions;
 
 namespace EzRabbitMQ.Tests
 {
-    public class RpcTests
+    public class RpcTests: TestBase
     {
         private readonly ITestOutputHelper _output;
 
         public RpcTests(ITestOutputHelper output) => _output = output;
 
-        [Fact]
-        public async Task CanDoRpcClientCall()
+        [Theory]
+        [MemberData(nameof(RpcConfig))]
+        public async Task CanDoRpcClientCall(bool isRetryHandle, bool isAsync)
         {
-            var (mailbox, _, _) = TestUtils.Build<RpcTests>(_output);
+            var (mailbox, _, _) = TestUtils.Build<RpcTests>(_output, isRetryHandle, isAsync);
 
             using var server = mailbox.RpcServer<RpcServerTest>();
 
@@ -28,10 +29,11 @@ namespace EzRabbitMQ.Tests
             Assert.Equal(message, response?.Model.Text);
         }
 
-        [Fact]
-        public void CanDoMultipleRpcClientCall()
+        [Theory]
+        [MemberData(nameof(RpcConfig))]
+        public void CanDoMultipleRpcClientCall(bool isRetryHandle, bool isAsync)
         {
-            var (mailbox, _, _) = TestUtils.Build<RpcTests>(_output);
+            var (mailbox, _, _) = TestUtils.Build<RpcTests>(_output, isRetryHandle, isAsync);
 
             using var server = mailbox.RpcServer<RpcServerTest>();
 
@@ -54,10 +56,11 @@ namespace EzRabbitMQ.Tests
             Assert.Equal(message2, response2?.Model.Text);
         }
 
-        [Fact]
-        public void CanDoMultipleRpcClientCalls()
+        [Theory]
+        [MemberData(nameof(RpcConfig))]
+        public void CanDoMultipleRpcClientCalls(bool isRetryHandle, bool isAsync)
         {
-            var (mailbox, _, _) = TestUtils.Build<RpcTests>(_output);
+            var (mailbox, _, _) = TestUtils.Build<RpcTests>(_output, isRetryHandle, isAsync);
 
             using var server = mailbox.RpcServer<RpcServerTest>();
 
@@ -80,10 +83,11 @@ namespace EzRabbitMQ.Tests
             Assert.Equal(message2, response2.Model.Text);
         }
 
-        [Fact]
-        public void CanDoTimeout()
+        [Theory]
+        [MemberData(nameof(RpcConfig))]
+        public void CanDoTimeout(bool isRetryHandle, bool isAsync)
         {
-            var (mailbox, _, _) = TestUtils.Build<RpcTests>(_output, true);
+            var (mailbox, _, _) = TestUtils.Build<RpcTests>(_output, isRetryHandle, isAsync);
 
             using var client = mailbox.RpcClient();
 
@@ -94,10 +98,11 @@ namespace EzRabbitMQ.Tests
             Assert.Null(response);
         }
 
-        [Fact]
-        public void CanUseMultipleRpcServer()
+        [Theory]
+        [MemberData(nameof(RpcConfig))]
+        public void CanUseMultipleRpcServer(bool isRetryHandle, bool isAsync)
         {
-            var (mailbox, _, _) = TestUtils.Build<RpcTests>(_output, true);
+            var (mailbox, _, _) = TestUtils.Build<RpcTests>(_output, isRetryHandle, isAsync);
 
             using var serverA = mailbox.RpcServer<RpcServerTest>();
             using var serverB = mailbox.RpcServer<RpcServerTest>("serverB");
@@ -115,10 +120,11 @@ namespace EzRabbitMQ.Tests
             Assert.Equal(messageB, responseB?.Model.Text);
         }
         
-        [Fact]
-        public void CanUseMultipleRpcClient()
+        [Theory]
+        [MemberData(nameof(RpcConfig))]
+        public void CanUseMultipleRpcClient(bool isRetryHandle, bool isAsync)
         {
-            var (mailbox, _, _) = TestUtils.Build<RpcTests>(_output);
+            var (mailbox, _, _) = TestUtils.Build<RpcTests>(_output, isRetryHandle, isAsync);
 
             using var serverA = mailbox.RpcServer<RpcServerTest>();
 
@@ -135,10 +141,11 @@ namespace EzRabbitMQ.Tests
             Assert.Equal(messageB, responseB?.Model.Text);
         }
 
-        [Fact]
-        public void CanReceiveMultipleHandleInOneServer()
+        [Theory]
+        [MemberData(nameof(RpcConfig))]
+        public void CanReceiveMultipleHandleInOneServer(bool isRetryHandle, bool isAsync)
         {
-            var (mailbox, _, _) = TestUtils.Build<RpcTests>(_output);
+            var (mailbox, _, _) = TestUtils.Build<RpcTests>(_output, isRetryHandle, isAsync);
 
             using var client = mailbox.RpcClient();
             using var serverA = mailbox.RpcServer<RpcServerTest>();
@@ -152,10 +159,11 @@ namespace EzRabbitMQ.Tests
         }
 
 
-        [Fact]
-        public void CanSendMultipleMessage()
+        [Theory]
+        [MemberData(nameof(RpcConfig))]
+        public void CanSendMultipleMessage(bool isRetryHandle, bool isAsync)
         {
-            var (mailbox, _, _) = TestUtils.Build<RpcTests>(_output);
+            var (mailbox, _, _) = TestUtils.Build<RpcTests>(_output, isRetryHandle, isAsync);
 
             using var client = mailbox.RpcClient();
             using var serverA = mailbox.RpcServer<RpcServerTest>();
@@ -167,10 +175,11 @@ namespace EzRabbitMQ.Tests
             }
         }
 
-        [Fact]
-        public void CanSendMessageThatIsNotExcepted()
+        [Theory]
+        [MemberData(nameof(RpcConfig))]
+        public void CanSendMessageThatIsNotExcepted(bool isRetryHandle, bool isAsync)
         {
-            var (mailbox, _, _) = TestUtils.Build<RpcTests>(_output);
+            var (mailbox, _, _) = TestUtils.Build<RpcTests>(_output, isRetryHandle, isAsync);
             
             using var client = mailbox.RpcClient();
             using var serverA = mailbox.RpcServer<RpcServerTest>();
@@ -180,10 +189,11 @@ namespace EzRabbitMQ.Tests
             Assert.Null(response);
         }
         
-        [Fact]
-        public void CanRecoverFromUnexpectedMessage()
+        [Theory]
+        [MemberData(nameof(RpcConfig))]
+        public void CanRecoverFromUnexpectedMessage(bool isRetryHandle, bool isAsync)
         {
-            var (mailbox, _, _) = TestUtils.Build<RpcTests>(_output);
+            var (mailbox, _, _) = TestUtils.Build<RpcTests>(_output, isRetryHandle, isAsync);
             
             using var serverA = mailbox.RpcServer<RpcServerTest>();
             using var client = mailbox.RpcClient();

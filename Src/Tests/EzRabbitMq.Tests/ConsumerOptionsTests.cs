@@ -7,16 +7,17 @@ using Xunit.Abstractions;
 
 namespace EzRabbitMQ.Tests
 {
-    public class ConsumerOptionsTests
+    public class ConsumerOptionsTests: TestBase
     {
         private readonly ITestOutputHelper _output;
 
         public ConsumerOptionsTests(ITestOutputHelper output) => _output = output;
 
-        [Fact]
-        public async Task CanRecreateIfBreakingChangeDetected()
+        [Theory]
+        [MemberData(nameof(MailboxConfig))]
+        public async Task CanRecreateIfBreakingChangeDetected(bool isAsync)
         {
-            var (mailboxService, producer, logger) = TestUtils.Build<DirectClientTests>(_output);
+            var (mailboxService, producer, logger) = TestUtils.Build<DirectClientTests>(_output, isAsync: isAsync);
 
             const string queueName = "queue-recreation-test";
             
@@ -45,10 +46,11 @@ namespace EzRabbitMQ.Tests
             Assert.Equal(message, evt1.Data.Text);
         }
         
-        [Fact]
-        public void CanRecreateExchangeOnForceRecreate()
+        [Theory]
+        [MemberData(nameof(MailboxConfig))]
+        public void CanRecreateExchangeOnForceRecreate(bool isAsync)
         {
-            var (mailboxService, _, _) = TestUtils.Build<DirectClientTests>(_output);
+            var (mailboxService, _, _) = TestUtils.Build<DirectClientTests>(_output, isAsync: isAsync);
 
             const string queueName = "exchange-recreation-test";
             const string exchangeName = "test-recreate";
@@ -71,10 +73,11 @@ namespace EzRabbitMQ.Tests
             });
         }
 
-        [Fact]
-        public void CanRecreateExchangeOnBreakingChange()
+        [Theory]
+        [MemberData(nameof(MailboxConfig))]
+        public void CanRecreateExchangeOnBreakingChange(bool isAsync)
         {
-            var (mailboxService, _, _) = TestUtils.Build<DirectClientTests>(_output);
+            var (mailboxService, _, _) = TestUtils.Build<DirectClientTests>(_output, isAsync: isAsync);
 
             const string queueName = "exchange-recreation-test";
             const string exchangeName = "test-recreate";

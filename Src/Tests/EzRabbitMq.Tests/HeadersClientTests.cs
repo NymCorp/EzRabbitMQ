@@ -8,7 +8,7 @@ using Xunit.Abstractions;
 
 namespace EzRabbitMQ.Tests
 {
-    public class HeadersClientTests
+    public class HeadersClientTests: TestBase
     {
         private const string HeaderKeyA = "format";
         private const string HeaderKeyB = "type";
@@ -26,10 +26,11 @@ namespace EzRabbitMQ.Tests
 
         public HeadersClientTests(ITestOutputHelper output) => _output = output;
 
-        [Fact]
-        public async Task CanSendHeadersMessageAndReceive()
+        [Theory]
+        [MemberData(nameof(MailboxConfig))]
+        public async Task CanSendHeadersMessageAndReceive(bool isAsync)
         {
-            var (mailbox, producer, logger) = TestUtils.Build<TopicClientTests>(_output);
+            var (mailbox, producer, logger) = TestUtils.Build<TopicClientTests>(_output, isAsync: isAsync);
 
             using var consumer = mailbox.Headers<TestSample>(new()
             {
@@ -47,10 +48,11 @@ namespace EzRabbitMQ.Tests
             logger.LogInformation("assert passed");
         }
 
-        [Fact]
-        public async Task CanSendHeadersAnyMessageAndReceive()
+        [Theory]
+        [MemberData(nameof(MailboxConfig))]
+        public async Task CanSendHeadersAnyMessageAndReceive(bool isAsync)
         {
-            var (mailbox, producer, logger) = TestUtils.Build<TopicClientTests>(_output);
+            var (mailbox, producer, logger) = TestUtils.Build<TopicClientTests>(_output, isAsync: isAsync);
 
             using var consumer = mailbox.Headers<TestSample>(new()
             {
@@ -70,10 +72,11 @@ namespace EzRabbitMQ.Tests
             Assert.Equal(message, evt.Data.Text);
         }
 
-        [Fact]
-        public async Task CanSendHeadersAnyMessageAndNotReceive()
+        [Theory]
+        [MemberData(nameof(MailboxConfig))]
+        public async Task CanSendHeadersAnyMessageAndNotReceive(bool isAsync)
         {
-            var (mailbox, producer, _) = TestUtils.Build<TopicClientTests>(_output);
+            var (mailbox, producer, _) = TestUtils.Build<TopicClientTests>(_output, isAsync: isAsync);
 
             var headersA = new Dictionary<string, string>
             {

@@ -7,7 +7,7 @@ using Xunit.Abstractions;
 
 namespace EzRabbitMQ.Tests
 {
-    public class DirectClientTests
+    public class DirectClientTests : TestBase
     {
         private const string RoutingKey1 = "routingKey1";
         private const string RoutingKey2 = "routingKey2";
@@ -18,20 +18,22 @@ namespace EzRabbitMQ.Tests
 
         public DirectClientTests(ITestOutputHelper output) => _output = output;
 
-        [Fact]
-        public void CanSendWithoutServer()
+        [Theory]
+        [MemberData(nameof(MailboxConfig))]
+        public void CanSendWithoutServer(bool isAsync)
         {
-            var (_, producer, _) = TestUtils.Build<DirectClientTests>(_output);
-            
+            var (_, producer, _) = TestUtils.Build<DirectClientTests>(_output, isAsync: isAsync);
+
             var message = Guid.NewGuid().ToString();
 
             producer.DirectSend(RoutingKey1, new TestSample(message));
         }
 
-        [Fact]
-        public async Task SendAndReceiveUsingManualCreator()
+        [Theory]
+        [MemberData(nameof(MailboxConfig))]
+        public async Task SendAndReceiveUsingManualCreator(bool isAsync)
         {
-            var (mailbox, producer, logger) = TestUtils.Build<DirectClientTests>(_output);
+            var (mailbox, producer, logger) = TestUtils.Build<DirectClientTests>(_output, isAsync: isAsync);
 
             var options = new DirectMailboxOptions(RoutingKey1, Guid.NewGuid().ToString());
 
@@ -49,10 +51,11 @@ namespace EzRabbitMQ.Tests
             Assert.Equal(message, evt1.Data.Text);
         }
 
-        [Fact]
-        public async Task RejectedMessageGoesToDlq()
+        [Theory]
+        [MemberData(nameof(MailboxConfig))]
+        public async Task RejectedMessageGoesToDlq(bool isAsync)
         {
-            var (mailbox, producer, logger) = TestUtils.Build<DirectClientTests>(_output);
+            var (mailbox, producer, logger) = TestUtils.Build<DirectClientTests>(_output, isAsync: isAsync);
 
             const string dlqExchange = "dlq-exchange";
             const string dlqRoutingKey = "dlq";
@@ -80,10 +83,11 @@ namespace EzRabbitMQ.Tests
             Assert.Equal(message, evt1.Data.Text);
         }
 
-        [Fact]
-        public async Task SendAndReceive()
+        [Theory]
+        [MemberData(nameof(MailboxConfig))]
+        public async Task SendAndReceive(bool isAsync)
         {
-            var (mailbox, producer, logger) = TestUtils.Build<DirectClientTests>(_output);
+            var (mailbox, producer, logger) = TestUtils.Build<DirectClientTests>(_output, isAsync: isAsync);
 
             using var consumer = mailbox.Direct<TestSample>(RoutingKey1, consumerOptions: ConsumerOptions);
 
@@ -95,19 +99,21 @@ namespace EzRabbitMQ.Tests
             Assert.Equal(message, evt1.Data.Text);
         }
 
-        [Fact]
-        public void CannotSendMessageWithNullRoutingKey()
+        [Theory]
+        [MemberData(nameof(MailboxConfig))]
+        public void CannotSendMessageWithNullRoutingKey(bool isAsync)
         {
-            var (mailbox, _, _) = TestUtils.Build<DirectClientTests>(_output);
+            var (mailbox, _, _) = TestUtils.Build<DirectClientTests>(_output, isAsync: isAsync);
 
             Assert.Throws<ValidationException>(() =>
                 _ = mailbox.Direct<TestSample>(null!, consumerOptions: ConsumerOptions));
         }
 
-        [Fact]
-        public async Task CanSendDirectToMultipleReceivers()
+        [Theory]
+        [MemberData(nameof(MailboxConfig))]
+        public async Task CanSendDirectToMultipleReceivers(bool isAsync)
         {
-            var (mailbox, producer, logger) = TestUtils.Build<DirectClientTests>(_output);
+            var (mailbox, producer, logger) = TestUtils.Build<DirectClientTests>(_output, isAsync: isAsync);
 
             using var consumer = mailbox.Direct<TestSample>(RoutingKey1, consumerOptions: ConsumerOptions);
             using var consumer2 = mailbox.Direct<TestSample>(RoutingKey2, consumerOptions: ConsumerOptions);
@@ -126,10 +132,11 @@ namespace EzRabbitMQ.Tests
             Assert.Equal(message, evt2.Data.Text);
         }
 
-        [Fact]
-        public async Task MustNotSendMessageToAnotherQueue()
+        [Theory]
+        [MemberData(nameof(MailboxConfig))]
+        public async Task MustNotSendMessageToAnotherQueue(bool isAsync)
         {
-            var (mailbox, producer, logger) = TestUtils.Build<DirectClientTests>(_output);
+            var (mailbox, producer, logger) = TestUtils.Build<DirectClientTests>(_output, isAsync: isAsync);
 
             using var consumer = mailbox.Direct<TestSample>(RoutingKey1, consumerOptions: ConsumerOptions);
 

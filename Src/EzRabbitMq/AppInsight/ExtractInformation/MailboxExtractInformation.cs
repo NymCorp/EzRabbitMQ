@@ -11,7 +11,7 @@ namespace EzRabbitMQ
         private const string NoExchange = "no-exchange";
         private const string NoRoutingKey = "no-routing-key";
 
-        private static readonly Lazy<string> EntryAssembly =
+        private readonly Lazy<string> _entryAssemblyName =
             new(() => Assembly.GetEntryAssembly()?.GetName().Name ?? "unknown");
 
         /// <inheritdoc />
@@ -29,7 +29,7 @@ namespace EzRabbitMQ
             {
                 Name = data.QueueName,
                 Target = $"{data.ExchangeName ?? "RPC"}({data.ExchangeType})-{data.QueueName}-{data.RoutingKey}",
-                Data = $"[{EntryAssembly.Value}]-{data.ExchangeName ?? NoExchange}({data.ExchangeType})-{data.QueueName}-{data.RoutingKey ?? NoRoutingKey}",
+                Data = $"[{_entryAssemblyName.Value}]-{data.ExchangeName ?? NoExchange}({data.ExchangeType})-{data.QueueName}-{data.RoutingKey ?? NoRoutingKey}",
                 ResultCode = "200",
                 Type = operationName
             };
@@ -42,7 +42,7 @@ namespace EzRabbitMQ
         /// <inheritdoc />
         protected override void PopulateProperties(IMailboxOptions data, IDictionary<string, string> properties)
         {
-            properties["assembly"] = EntryAssembly.Value;
+            properties["assembly"] = _entryAssemblyName.Value;
             properties["exchange"] = data.ExchangeName ?? NoExchange;
             properties["exchange-type"] = data.ExchangeType.ToString();
             properties["queue-name"] = data.QueueName;

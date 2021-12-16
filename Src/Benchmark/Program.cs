@@ -16,7 +16,7 @@ namespace Benchmark
     [SimpleJob(RuntimeMoniker.Net60)]
     [MarkdownExporter, HtmlExporter]
     [MemoryDiagnoser]
-    [ThreadingDiagnoser] 
+    [ThreadingDiagnoser]
     public class MessagePackSerializer
     {
         private static readonly ConsumerOptions ConsumerOptions = new()
@@ -39,7 +39,7 @@ namespace Benchmark
 
         private static (IProducerService ProducerService, IMailboxService MailboxService) CreateServiceProvider(bool isMessagePack)
         {
-            var services =  new ServiceCollection()
+            var services = new ServiceCollection()
                 .AddLogging()
                 .AddEzRabbitMQ(config =>
                 {
@@ -54,7 +54,7 @@ namespace Benchmark
 
             var mailboxService = services.GetRequiredService<IMailboxService>();
             var producerService = services.GetRequiredService<IProducerService>();
-            
+
             return (producerService, mailboxService);
         }
 
@@ -96,7 +96,7 @@ namespace Benchmark
         public string CreateMailbox(string providerName)
         {
             var id = Guid.NewGuid().ToString();
-            
+
             using var mailbox = _serviceProviders[providerName].MailboxService.Direct<RpcIncrementRequest>(id, consumerOptions: ConsumerOptions);
 
             return id;
@@ -108,30 +108,53 @@ namespace Benchmark
         {
             var mailboxService = _serviceProviders[providerName].MailboxService;
             var producerService = _serviceProviders[providerName].ProducerService;
-        
+
             var id = Guid.NewGuid().ToString();
-            using var mailbox = mailboxService.Direct<RpcIncrementRequest>(id, consumerOptions: ConsumerOptions);
-        
-            using var ct = new CancellationTokenSource(TimeSpan.FromSeconds(5));
-            
-            using var bc = new BlockingCollection<string>();
-        
-            mailbox.OnMessage += (_, message) =>
+            if (providerName == "default")
             {
-                if (!bc.IsCompleted)
+                using var mailbox = mailboxService.Direct<RpcIncrementRequest>(id, consumerOptions: ConsumerOptions);
+                using var ct = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+
+                using var bc = new BlockingCollection<string>();
+
+                mailbox.OnMessage += (_, message) =>
                 {
-                    bc.Add(message.Data.CurrentValue.ToString(), ct.Token);
-                }
-            };
+                    if (!bc.IsCompleted)
+                    {
+                        bc.Add(message.Data.CurrentValue.ToString(), ct.Token);
+                    }
+                };
+
+                producerService.DirectSend(id, new RpcIncrementRequest(0));
+
+                return bc.Take(ct.Token);
+            }
+            else
+            {
+                using var mailbox = mailboxService.Direct<MsgPackRpcIncrementRequest>(id, consumerOptions: ConsumerOptions);
+
+                using var ct = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+
+                using var bc = new BlockingCollection<string>();
+
+                mailbox.OnMessage += (_, message) =>
+                {
+                    if (!bc.IsCompleted)
+                    {
+                        bc.Add(message.Data.CurrentValue.ToString(), ct.Token);
+                    }
+                };
+
+                producerService.DirectSend(id, new RpcIncrementRequest(0));
+
+                return bc.Take(ct.Token);
+            }
             
-            producerService.DirectSend(id, new RpcIncrementRequest(0));
-        
-            return bc.Take(ct.Token);
         }
 
         [Benchmark, Arguments("default")]
         [Arguments("message-pack")]
-        public RpcIncrementResponse? MessagePackSendAndReceiveRpcMessage(string providerName)
+        public void MessagePackSendAndReceiveRpcMessage(string providerName)
         {
             var id = Guid.NewGuid().ToString();
 
@@ -139,13 +162,24 @@ namespace Benchmark
 
             var mailboxService = _serviceProviders[providerName].MailboxService;
 
-            using var mailbox = mailboxService.RpcServer<IncrementRpcServer>(server, ConsumerOptions);
+            if (providerName == "default")
+            {
+                using var rpcServer = mailboxService.RpcServer<IncrementRpcServer>(server, ConsumerOptions);
+                using var client = mailboxService.RpcClient(server, ConsumerOptions);
 
-            using var client = mailboxService.RpcClient(server, ConsumerOptions);
+                var result = client.Call<RpcIncrementResponse>(new RpcIncrementRequest(0));
 
-            var response = client.Call<RpcIncrementResponse>(new RpcIncrementRequest(0));
+                if (result?.NewValue != 1) throw new Exception($"Invalid response : {result?.NewValue}");
+            }
+            else
+            {
+                using var rpcServer = mailboxService.RpcServer<IncrementRpcServer>(server, ConsumerOptions);
+                using var client = mailboxService.RpcClient(server, ConsumerOptions);
 
-            return response;
+                var result = client.Call<MsgPackRpcIncrementResponse>(new MsgPackRpcIncrementRequest(0));
+
+                if (result?.NewValue != 1) throw new Exception("Invalid response");
+            }
         }
 
         [Benchmark, Arguments("default")]
@@ -153,18 +187,32 @@ namespace Benchmark
         public int SendAndReceive100RpcMessage(string providerName)
         {
             var id = Guid.NewGuid().ToString();
-
             var server = $"server-{id}";
-
             var mailboxService = _serviceProviders[providerName].MailboxService;
 
-            using var mailbox = mailboxService.RpcServer<IncrementRpcServer>(server, ConsumerOptions);
-
-            using var client = mailboxService.RpcClient(server, ConsumerOptions);
-
-            for (int i = 0; i < 100; i++)
+            if (providerName == "default")
             {
-                client.Call<RpcIncrementResponse>(new RpcIncrementRequest(0));
+                using var rpcServer = mailboxService.RpcServer<IncrementRpcServer>(server, ConsumerOptions);
+                using var client = mailboxService.RpcClient(server, ConsumerOptions);
+
+                for (int i = 0; i < 100; i++)
+                {
+                    var result = client.Call<RpcIncrementResponse>(new RpcIncrementRequest(i));
+
+                    if (result?.NewValue != (i + 1)) throw new Exception("Invalid response");
+                }
+            }
+            else
+            {
+                using var rpcServer = mailboxService.RpcServer<IncrementRpcServer>(server, ConsumerOptions);
+                using var client = mailboxService.RpcClient(server, ConsumerOptions);
+
+                for (int i = 0; i < 100; i++)
+                {
+                    var result = client.Call<MsgPackRpcIncrementResponse>(new MsgPackRpcIncrementRequest(i));
+
+                    if (result?.NewValue != (i + 1)) throw new Exception("Invalid response");
+                }
             }
 
             return 0;

@@ -6,7 +6,7 @@ using Xunit.Abstractions;
 
 namespace EzRabbitMQ.Tests
 {
-    public class FanoutClientTests
+    public class FanoutClientTests: TestBase
     {
         private static readonly ConsumerOptions ConsumerOptions = TestUtils.ConsumerOptions;
 
@@ -14,10 +14,11 @@ namespace EzRabbitMQ.Tests
 
         public FanoutClientTests(ITestOutputHelper output) => _output = output;
 
-        [Fact]
-        public async Task CanSendFanoutMessageAndReceive()
+        [Theory]
+        [MemberData(nameof(MailboxConfig))]
+        public async Task CanSendFanoutMessageAndReceive(bool isAsync)
         {
-            var (mailbox, producer, logger) = TestUtils.Build<FanoutClientTests>(_output);
+            var (mailbox, producer, logger) = TestUtils.Build<FanoutClientTests>(_output, isAsync: isAsync);
 
             using var consumer = mailbox.Fanout<TestSample>(consumerOptions: ConsumerOptions);
 
@@ -28,10 +29,11 @@ namespace EzRabbitMQ.Tests
             Assert.Equal(message, evt1.Data.Text);
         }
 
-        [Fact]
-        public async Task CanSendDirectToMultipleReceivers()
+        [Theory]
+        [MemberData(nameof(MailboxConfig))]
+        public async Task CanSendDirectToMultipleReceivers(bool isAsync)
         {
-            var (mailbox, producer, logger) = TestUtils.Build<FanoutClientTests>(_output);
+            var (mailbox, producer, logger) = TestUtils.Build<FanoutClientTests>(_output, isAsync: isAsync);
 
             using var consumer = mailbox.Fanout<TestSample>(consumerOptions: ConsumerOptions);
             using var consumer2 = mailbox.Fanout<TestSample>(consumerOptions: ConsumerOptions);

@@ -11,20 +11,24 @@ namespace EzRabbitMQ.Tests
     {
         // here to validate IServiceProvider resolving from user's service instance 
         private readonly IRandomService _randomService;
+        private readonly IAdditionService _additionService;
 
         public RpcServerTest(
             ILogger<RpcServerTest> logger,
             IMailboxOptions options,
             ISessionService session,
             ConsumerOptions consumerOptions,
-            IRandomService randomService
+            IRandomService randomService,
+            IAdditionService additionService
         ) : base(logger, options, session, consumerOptions)
         {
             _randomService = randomService;
+            _additionService = additionService;
         }
 
         public RpcSampleResponse Handle(RpcSampleRequest request)
         {
+            Logger.LogDebug("Handled called, generating random number: {RandomNumber}", _randomService.GetRandomInt());
             return new RpcSampleResponse
             {
                 Model = new TestSample(request.Text)
@@ -33,7 +37,7 @@ namespace EzRabbitMQ.Tests
 
         public Task<RpcIncrementResponse> HandleAsync(RpcIncrementRequest request, CancellationToken cancellationToken = default)
         {
-            return Task.FromResult(new RpcIncrementResponse(request.CurrentValue + 1));
+            return Task.FromResult(new RpcIncrementResponse(_additionService.Add(request.CurrentValue, 1)));
         }
     }
 }
