@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Threading;
+﻿using System.Collections.Concurrent;
 using Benchmark.Models;
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Jobs;
@@ -86,8 +83,17 @@ namespace Benchmark
         [Arguments("message-pack")]
         public bool SendMessage(string providerName)
         {
-            _serviceProviders[providerName].ProducerService
-                .DirectSend("bench", new RpcIncrementRequest(0));
+            if (providerName == "default")
+            {
+                _serviceProviders[providerName].ProducerService
+                    .DirectSend("bench", new RpcIncrementRequest(0));
+            }
+            else
+            {
+                _serviceProviders[providerName].ProducerService
+                    .DirectSend("bench", new MsgPackRpcIncrementRequest(0));
+            }
+
             return true;
         }
 
@@ -97,7 +103,14 @@ namespace Benchmark
         {
             var id = Guid.NewGuid().ToString();
 
-            using var mailbox = _serviceProviders[providerName].MailboxService.Direct<RpcIncrementRequest>(id, consumerOptions: ConsumerOptions);
+            if (providerName == "default")
+            {
+                using var mailbox = _serviceProviders[providerName].MailboxService.Direct<RpcIncrementRequest>(id, consumerOptions: ConsumerOptions);
+            }
+            else
+            {
+                using var mailbox = _serviceProviders[providerName].MailboxService.Direct<MsgPackRpcIncrementRequest>(id, consumerOptions: ConsumerOptions);
+            }
 
             return id;
         }
@@ -145,11 +158,10 @@ namespace Benchmark
                     }
                 };
 
-                producerService.DirectSend(id, new RpcIncrementRequest(0));
+                producerService.DirectSend(id, new MsgPackRpcIncrementRequest(0));
 
                 return bc.Take(ct.Token);
             }
-            
         }
 
         [Benchmark, Arguments("default")]
@@ -173,7 +185,7 @@ namespace Benchmark
             }
             else
             {
-                using var rpcServer = mailboxService.RpcServer<IncrementRpcServer>(server, ConsumerOptions);
+                using var rpcServer = mailboxService.RpcServer<MsgPackIncrementRpcServer>(server, ConsumerOptions);
                 using var client = mailboxService.RpcClient(server, ConsumerOptions);
 
                 var result = client.Call<MsgPackRpcIncrementResponse>(new MsgPackRpcIncrementRequest(0));
@@ -204,7 +216,7 @@ namespace Benchmark
             }
             else
             {
-                using var rpcServer = mailboxService.RpcServer<IncrementRpcServer>(server, ConsumerOptions);
+                using var rpcServer = mailboxService.RpcServer<MsgPackIncrementRpcServer>(server, ConsumerOptions);
                 using var client = mailboxService.RpcClient(server, ConsumerOptions);
 
                 for (int i = 0; i < 100; i++)
