@@ -1,6 +1,9 @@
-﻿using EzRabbitMQ;
+﻿using System.Threading;
+using System.Threading.Tasks;
+using EzRabbitMQ;
 using EzRabbitMQ.Tests.Messages;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 
 namespace WebSample.Controllers;
 
@@ -17,7 +20,7 @@ public class RpcMessageSenderController : ControllerBase
         _mailboxService = mailboxService;
     }
 
-    [HttpPost("increment/{value}")]
+    [HttpPost("increment/{value:int}")]
     public async Task<int?> SendRpcIncrementRequest(int value, CancellationToken cancellationToken = default)
     {
         _logger.LogInformation("Sending rpc request...");

@@ -4,7 +4,7 @@ namespace Benchmark.Models
 {
     public interface IRpcIncrementRequest
     {
-        int CurrentValue { get; }
+        public int CurrentValue { get; }
     }
 
     public record RpcIncrementRequest(int CurrentValue) : IRpcIncrementRequest;
