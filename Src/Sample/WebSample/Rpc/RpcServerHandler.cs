@@ -1,9 +1,4 @@
-﻿using System;
-using System.Threading;
-using System.Threading.Tasks;
-using EzRabbitMQ;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
+﻿using EzRabbitMQ;
 
 public class RpcServerHandler : BackgroundService
 {
@@ -20,6 +15,7 @@ public class RpcServerHandler : BackgroundService
     protected override Task ExecuteAsync(CancellationToken stoppingToken)
     {
         _rpcServer = _mailboxService.RpcServer<IncRpcServer>("inc-rpc-server", customServiceProvider: _serviceScope.ServiceProvider);
+        
         return Task.CompletedTask;
     }
 
@@ -27,7 +23,7 @@ public class RpcServerHandler : BackgroundService
     {
         _rpcServer?.Dispose();
         _serviceScope.Dispose();
-        Console.WriteLine("DISPOED");
+        
         return Task.CompletedTask;
     }
 }
