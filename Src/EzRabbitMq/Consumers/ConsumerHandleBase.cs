@@ -33,7 +33,7 @@ namespace EzRabbitMQ
         /// <summary>
         /// Consumer tag, representing the unique consumer identifier
         /// </summary>
-        protected readonly string ConsumerTag;
+        protected readonly string ConsumerTag = ConsumersManager.CreateTag();
 
         /// <summary>
         /// Logger
@@ -72,9 +72,6 @@ namespace EzRabbitMQ
             Logger = logger;
             Session = session;
             Options = options;
-
-            ConsumerTag = ConsumersManager.CreateTag();
-
             ConsumerOptions = consumerOptions;
 
             Session.Polly.TryExecute<CreateConsumerException>(CreateConsumer);

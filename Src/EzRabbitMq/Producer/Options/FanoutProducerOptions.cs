@@ -1,4 +1,6 @@
-﻿namespace EzRabbitMQ
+﻿using FluentValidation;
+
+namespace EzRabbitMQ
 {
     /// <summary>
     /// Fanout producer options
@@ -22,5 +24,11 @@
 
         /// <inheritdoc />
         public ProducerProperties Properties { get; } = new();
+    }
+    
+    // ReSharper disable once UnusedType.Global
+    internal class FanoutProducerOptionsValidator : AbstractValidator<FanoutProducerOptions>
+    {
+        // no validation needed
     }
 }

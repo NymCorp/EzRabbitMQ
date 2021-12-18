@@ -1,8 +1,5 @@
-﻿using System.Threading;
-using System.Threading.Tasks;
-using EzRabbitMQ;
+﻿using EzRabbitMQ;
 using EzRabbitMQ.Tests.Messages;
-using Microsoft.Extensions.Logging;
 
 public class IncRpcServer : RpcServerBase, IRpcServerHandleAsync<RpcIncrementResponse, RpcIncrementRequest>
 {

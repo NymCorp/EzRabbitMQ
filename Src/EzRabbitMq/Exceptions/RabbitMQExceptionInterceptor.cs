@@ -13,6 +13,7 @@ namespace EzRabbitMQ.Exceptions
         /// </summary>
         /// <param name="e">RabbitMQ exception</param>
         /// <returns>Handled RabbitMQ type</returns>
+        // ReSharper disable once InconsistentNaming
         public static RabbitMQExceptionType ParseRabbitMQException(Exception e)
         {
             if (e is OperationInterruptedException op)

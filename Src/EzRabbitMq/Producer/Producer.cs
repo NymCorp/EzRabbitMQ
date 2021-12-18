@@ -1,5 +1,4 @@
-﻿
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
@@ -90,6 +89,7 @@ namespace EzRabbitMQ
                 _logger.LogError("Unable to set session properties because channel properties field is null");
                 return;
             }
+            
             _session.Properties.DeliveryMode = (byte) _options.Properties.DeliveryMode;
 
             if (_options.Properties.Expiration.HasValue)
@@ -127,6 +127,7 @@ namespace EzRabbitMQ
                 _logger.LogError("Unable to publish message without channel's session properties");
                 return;
             }
+            
             _session.Properties.Type = type;
             _session.Model.BasicPublish(_options.ExchangeName, _options.RoutingKey, _session.Properties, new ReadOnlyMemory<byte>(body));
         }

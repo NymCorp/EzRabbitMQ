@@ -3,6 +3,7 @@
     /// <summary>
     /// Enum type of handled RabbitMQ exception type. 
     /// </summary>
+    // ReSharper disable once InconsistentNaming
     public enum RabbitMQExceptionType
     {
         /// <summary>

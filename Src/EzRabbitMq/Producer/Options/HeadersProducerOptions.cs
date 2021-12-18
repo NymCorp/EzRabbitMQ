@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using FluentValidation;
 
 namespace EzRabbitMQ
 {
@@ -14,20 +15,28 @@ namespace EzRabbitMQ
         /// <param name="exchangeName">Exchange name, fallback on default exchange name</param>
         public HeadersProducerOptions(Dictionary<string, string> headers, string? exchangeName = null)
         {
-            RoutingKey = string.Empty;
-            
             ExchangeName = exchangeName ?? ExchangeType.Headers.Name();
 
             Properties.Headers = headers;
         }
 
         /// <inheritdoc />
-        public string RoutingKey { get; }
+        public string RoutingKey => string.Empty;
 
         /// <inheritdoc />
         public string ExchangeName { get; }
 
         /// <inheritdoc />
         public ProducerProperties Properties { get; } = new ();
+    }
+    
+    // ReSharper disable once UnusedType.Global
+    internal class HeadersProducerOptionsValidator: AbstractValidator<HeadersProducerOptions>
+    {
+        public HeadersProducerOptionsValidator()
+        {
+            RuleFor(x => x.Properties.Headers).NotNull().NotEmpty()
+                .WithMessage("Unable to send message, headers are required");
+        }
     }
 }

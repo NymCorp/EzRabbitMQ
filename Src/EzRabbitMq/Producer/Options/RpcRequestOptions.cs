@@ -1,4 +1,6 @@
-﻿namespace EzRabbitMQ
+﻿using FluentValidation;
+
+namespace EzRabbitMQ
 {
     /// <summary>
     /// RPC producer request options
@@ -26,5 +28,15 @@
 
         /// <inheritdoc />
         public ProducerProperties Properties { get; } = new();
+    }
+    
+    // ReSharper disable once UnusedType.Global
+    internal class RpcRequestOptionsValidator : AbstractValidator<RpcRequestOptions>
+    {
+        public RpcRequestOptionsValidator()
+        {
+            RuleFor(x => x.Properties.CorrelationId).NotNull().NotEmpty()
+                .WithMessage("Unable to send a RPC request without a correlation id");
+        }
     }
 }

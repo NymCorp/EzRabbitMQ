@@ -44,6 +44,7 @@ namespace EzRabbitMQ
             
             return services;
         }
+        
 #if NETCOREAPP
         /// <summary>
         /// You can useEzRabbitMQ for additional configuration options

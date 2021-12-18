@@ -17,7 +17,6 @@ namespace EzRabbitMQ
         /// Application Insights instrumentation key
         /// </summary>
         public const string AppInsightKey = "ApplicationInsights:InstrumentationKey";
-
     }
 
     /// <summary>
