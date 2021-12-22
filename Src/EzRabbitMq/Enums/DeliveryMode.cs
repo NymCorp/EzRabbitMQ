@@ -1,17 +1,17 @@
-﻿namespace EzRabbitMQ
+﻿namespace EzRabbitMQ;
+
+/// <summary>
+/// Message's delivery mode
+/// </summary>
+public enum DeliveryMode
 {
     /// <summary>
-    /// Message's delivery mode
+    /// Non persistent
     /// </summary>
-    public enum DeliveryMode
-    {
-        /// <summary>
-        /// Non persistent
-        /// </summary>
-        NonPersistent = 1,
-        /// <summary>
-        /// Persistent
-        /// </summary>
-        Persistent = 2
-    }
+    NonPersistent = 1,
+
+    /// <summary>
+    /// Persistent
+    /// </summary>
+    Persistent = 2
 }
