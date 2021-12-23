@@ -1,21 +1,19 @@
-﻿using System;
-using RabbitMQ.Client;
+﻿using RabbitMQ.Client;
 
-namespace EzRabbitMQ
+namespace EzRabbitMQ;
+
+/// <summary>
+/// Handle the rabbitMQ connection
+/// </summary>
+public interface IConnectionService : IDisposable
 {
     /// <summary>
-    /// Handle the rabbitMQ connection
+    /// RabbitMQ connection
     /// </summary>
-    public interface IConnectionService : IDisposable
-    {
-        /// <summary>
-        /// RabbitMQ connection
-        /// </summary>
-        IConnection? Connection { get; }
+    IConnection? Connection { get; }
 
-        /// <summary>
-        /// Create a new connection using poly policy
-        /// </summary>
-        void TryConnect();
-    }
+    /// <summary>
+    /// Create a new connection using poly policy
+    /// </summary>
+    void TryConnect();
 }

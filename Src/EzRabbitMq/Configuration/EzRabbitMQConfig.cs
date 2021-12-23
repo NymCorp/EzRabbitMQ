@@ -1,108 +1,105 @@
-﻿
-using System;
-using System.Text.Json;
+﻿using System.Text.Json;
 using Polly;
 using Polly.Retry;
 using RabbitMQ.Client;
 
-namespace EzRabbitMQ
+namespace EzRabbitMQ;
+
+/// <summary>
+/// Config bag for EzRabbitMQ library.
+/// </summary>
+public class EzRabbitMQConfig
 {
     /// <summary>
-    /// Config bag for EzRabbitMQ library.
+    /// Polly policy used for rabbitmq client/server requests.
     /// </summary>
-    public class EzRabbitMQConfig
+    public AsyncRetryPolicy PollyPolicy { get; private set; } =
+        Policy.Handle<Exception>()
+            .WaitAndRetryAsync(5, retryAttempt =>
+                TimeSpan.FromSeconds(Math.Pow(2, retryAttempt))
+            );
+
+    /// <summary>
+    /// Rpc Polly policy used for rabbitmq client/server requests.
+    /// default to no retry policy
+    /// </summary>
+    public AsyncRetryPolicy<object>? RpcPollyPolicy { get; private set; }
+
+    /// <summary>
+    /// Is async dispatcher or sync dispatcher, default value to false, async dispatcher doesnt guarantee message order.
+    /// </summary>
+    public bool IsAsyncDispatcher { get; set; }
+
+    /// <summary>
+    /// IConnectionFactory with default value targeting localhost.
+    ///  <example>Connection.UserName = "example-user";</example>
+    /// </summary>
+    public ConnectionFactory Connection { get; private set; } = new()
     {
-        /// <summary>
-        /// Polly policy used for rabbitmq client/server requests.
-        /// </summary>
-        public AsyncRetryPolicy PollyPolicy { get; private set; } =
-            Policy.Handle<Exception>()
-                .WaitAndRetryAsync(5, retryAttempt =>
-                    TimeSpan.FromSeconds(Math.Pow(2, retryAttempt))
-                );
+        HostName = "localhost",
+        Password = "guest",
+        UserName = "guest",
+        Port = 5672,
+        VirtualHost = "/",
+    };
 
-        /// <summary>
-        /// Rpc Polly policy used for rabbitmq client/server requests.
-        /// default to no retry policy
-        /// </summary>
-        public AsyncRetryPolicy<object>? RpcPollyPolicy { get; private set; }
+    /// <summary>
+    /// Data serializer.
+    /// </summary>
+    public Func<object, byte[]> SerializeData { get; private set; } = obj => JsonSerializer.SerializeToUtf8Bytes(obj);
 
-        /// <summary>
-        /// Is async dispatcher or sync dispatcher, default value to false, async dispatcher doesnt guarantee message order.
-        /// </summary>
-        public bool IsAsyncDispatcher { get; set; }
+    /// <summary>
+    /// Data deserializer.
+    /// </summary>
+    public Func<byte[], Type, object?> DeserializeData { get; private set; } = (bytes, type) => JsonSerializer.Deserialize(bytes, type);
 
-        /// <summary>
-        /// IConnectionFactory with default value targeting localhost.
-        ///  <example>Connection.UserName = "example-user";</example>
-        /// </summary>
-        public ConnectionFactory Connection { get; private set; } = new ()
-        {
-            HostName = "localhost",
-            Password = "guest",
-            UserName = "guest",
-            Port = 5672,
-            VirtualHost = "/",
-        };
+    /// <summary>
+    /// Optional AppInsight InstrumentationKey used for telemetry and tracing.
+    /// </summary>
+    public string InstrumentationKey { get; private set; } = string.Empty;
 
-        /// <summary>
-        /// Data serializer.
-        /// </summary>
-        public Func<object, byte[]> SerializeData { get; private set; } = obj => JsonSerializer.SerializeToUtf8Bytes(obj);
+    /// <summary>
+    /// Set the instrumentationKey to send in AppInsight metrics and trace.
+    /// </summary>
+    /// <param name="instrumentationKey">AppInsight instrumentation key.</param>
+    public void ConfigureInstrumentationKey(string instrumentationKey) => InstrumentationKey = instrumentationKey;
 
-        /// <summary>
-        /// Data deserializer.
-        /// </summary>
-        public Func<byte[], Type, object?> DeserializeData { get; private set; } = (bytes, type) => JsonSerializer.Deserialize(bytes, type);
+    /// <summary>
+    /// Configure the rabbitMQ connection factory.
+    /// </summary>
+    /// <param name="connection"><see cref="ConnectionFactory"/> instance.</param>
+    public void ConfigureConnection(ConnectionFactory connection)
+    {
+        Connection = connection;
+    }
 
-        /// <summary>
-        /// Optional AppInsight InstrumentationKey used for telemetry and tracing.
-        /// </summary>
-        public string InstrumentationKey { get; private set; } = string.Empty;
+    /// <summary>
+    /// Override the current polly policy, this policy is used to wrap all rabbitMQ calls.
+    /// </summary>
+    /// <param name="policy">New polly policy.</param>
+    public void ConfigurePollyPolicy(AsyncRetryPolicy policy)
+    {
+        PollyPolicy = policy;
+    }
 
-        /// <summary>
-        /// Set the instrumentationKey to send in AppInsight metrics and trace.
-        /// </summary>
-        /// <param name="instrumentationKey">AppInsight instrumentation key.</param>
-        public void ConfigureInstrumentationKey(string instrumentationKey) => InstrumentationKey = instrumentationKey;
+    /// <summary>
+    /// Override the current Rpc polly policy, this policy is used to wrap all rabbitMQ calls.
+    /// Default to no retry policy, set to null to disable retry explicitly.
+    /// </summary>
+    /// <param name="policy">Polly policy to set.</param>
+    public void ConfigureRpcPollyPolicy(AsyncRetryPolicy<object>? policy)
+    {
+        RpcPollyPolicy = policy;
+    }
 
-        /// <summary>
-        /// Configure the rabbitMQ connection factory.
-        /// </summary>
-        /// <param name="connection"><see cref="ConnectionFactory"/> instance.</param>
-        public void ConfigureConnection(ConnectionFactory connection)
-        {
-            Connection = connection;
-        }
-
-        /// <summary>
-        /// Override the current polly policy, this policy is used to wrap all rabbitMQ calls.
-        /// </summary>
-        /// <param name="policy">New polly policy.</param>
-        public void ConfigurePollyPolicy(AsyncRetryPolicy policy)
-        {
-            PollyPolicy = policy;
-        }
-        
-        /// <summary>
-        /// Override the current Rpc polly policy, this policy is used to wrap all rabbitMQ calls.
-        /// Default to no retry policy, set to null to disable retry explicitly.
-        /// </summary>
-        /// <param name="policy">Polly policy to set.</param>
-        public void ConfigureRpcPollyPolicy(AsyncRetryPolicy<object>? policy)
-        {
-            RpcPollyPolicy = policy;
-        }
-
-        /// <summary>
-        /// Configure the serializer and deserializer used to serialize messages.
-        /// </summary>
-        /// <param name="serializer">Takes an object and return a byte[].</param>
-        /// <param name="deserializer">Takes a byte array and return an object.</param>
-        public void ConfigureSerialization(Func<object, byte[]> serializer, Func<byte[], Type, object?> deserializer)
-        {
-            SerializeData = serializer;
-            DeserializeData = deserializer;
-        }
+    /// <summary>
+    /// Configure the serializer and deserializer used to serialize messages.
+    /// </summary>
+    /// <param name="serializer">Takes an object and return a byte[].</param>
+    /// <param name="deserializer">Takes a byte array and return an object.</param>
+    public void ConfigureSerialization(Func<object, byte[]> serializer, Func<byte[], Type, object?> deserializer)
+    {
+        SerializeData = serializer;
+        DeserializeData = deserializer;
     }
 }
