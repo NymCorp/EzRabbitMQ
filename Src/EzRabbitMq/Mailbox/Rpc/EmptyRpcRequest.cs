@@ -1,7 +1,6 @@
-namespace EzRabbitMQ
-{
-    /// <summary>
-    /// Empty request
-    /// </summary>
-    public record EmptyRpcRequest;
-}
+namespace EzRabbitMQ;
+
+/// <summary>
+/// Empty request
+/// </summary>
+public record EmptyRpcRequest;

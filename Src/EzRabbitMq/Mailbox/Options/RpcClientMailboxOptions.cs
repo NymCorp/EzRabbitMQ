@@ -1,47 +1,44 @@
-﻿using System;
-using System.Collections.Generic;
-using FluentValidation;
+﻿using FluentValidation;
 
-namespace EzRabbitMQ
+namespace EzRabbitMQ;
+
+/// <summary>
+/// RPC mailbox options
+/// </summary>
+public record RpcClientMailboxOptions : IMailboxOptions
 {
     /// <summary>
-    /// RPC mailbox options
+    /// Create a client with a specific queue name
     /// </summary>
-    public record RpcClientMailboxOptions : IMailboxOptions
+    /// <param name="routingKey">Routing key, must match with the RPC server name</param>
+    public RpcClientMailboxOptions(string? routingKey = null)
     {
-        /// <summary>
-        /// Create a client with a specific queue name
-        /// </summary>
-        /// <param name="routingKey">Routing key, must match with the RPC server name</param>
-        public RpcClientMailboxOptions(string? routingKey = null)
-        {
-            RoutingKey = routingKey ?? Constants.RpcDefaultRoutingKey;
-        }
-        
-        /// <inheritdoc />
-        public string ExchangeName => string.Empty;
-
-        /// <inheritdoc />
-        public ExchangeType ExchangeType => ExchangeType.RpcClient;
-
-        /// <inheritdoc />
-        public string RoutingKey { get; }
-
-        /// <inheritdoc />
-        public string QueueName => Constants.RpcReplyToQueue;
-
-        /// <inheritdoc />
-        public string CorrelationId { get; } = Guid.NewGuid().ToString();
-
-        /// <inheritdoc />
-        public Dictionary<string, string> QueueBindingHeaders { get; } = new();
-
-        /// <inheritdoc />
-        public Dictionary<string, string> SessionHeaders { get; } = new();
+        RoutingKey = routingKey ?? Constants.RpcDefaultRoutingKey;
     }
-    
-    // ReSharper disable once UnusedType.Global
-    internal class RpcClientMailboxOptionsValidator : AbstractValidator<RpcClientMailboxOptions>
-    {
-    }
+
+    /// <inheritdoc />
+    public string ExchangeName => string.Empty;
+
+    /// <inheritdoc />
+    public ExchangeType ExchangeType => ExchangeType.RpcClient;
+
+    /// <inheritdoc />
+    public string RoutingKey { get; }
+
+    /// <inheritdoc />
+    public string QueueName => Constants.RpcReplyToQueue;
+
+    /// <inheritdoc />
+    public string CorrelationId { get; } = Guid.NewGuid().ToString();
+
+    /// <inheritdoc />
+    public Dictionary<string, string> QueueBindingHeaders { get; } = new();
+
+    /// <inheritdoc />
+    public Dictionary<string, string> SessionHeaders { get; } = new();
+}
+
+// ReSharper disable once UnusedType.Global
+internal class RpcClientMailboxOptionsValidator : AbstractValidator<RpcClientMailboxOptions>
+{
 }

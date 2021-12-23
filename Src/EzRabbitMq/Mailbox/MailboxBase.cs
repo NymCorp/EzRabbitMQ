@@ -1,101 +1,96 @@
-﻿
-using System;
-using System.Collections.Generic;
-using EzRabbitMQ.Exceptions;
+﻿using EzRabbitMQ.Exceptions;
 using EzRabbitMQ.Queue;
-using Microsoft.Extensions.Logging;
 using RabbitMQ.Client;
 
-namespace EzRabbitMQ
+namespace EzRabbitMQ;
+
+/// <summary>
+/// Mailbox Base
+/// </summary>
+public abstract class MailboxBase : ConsumerHandleBase
 {
     /// <summary>
-    /// Mailbox Base
+    /// Mailbox queue handle creation, configuration and deletion of the queue
     /// </summary>
-    public abstract class MailboxBase : ConsumerHandleBase
+    protected readonly MailboxQueue Queue;
+
+    /// <summary>
+    /// Mailbox exchange handle creation, configuration and deletion of the exchange
+    /// </summary>
+    protected readonly MailboxExchange Exchange;
+
+    /// <inheritdoc />
+    protected MailboxBase(
+        ILogger logger,
+        IMailboxOptions options,
+        ISessionService session,
+        ConsumerOptions consumerOptions
+    ) : base(logger, options, session, consumerOptions)
     {
-        /// <summary>
-        /// Mailbox queue handle creation, configuration and deletion of the queue
-        /// </summary>
-        protected readonly MailboxQueue Queue;
-        
-        /// <summary>
-        /// Mailbox exchange handle creation, configuration and deletion of the exchange
-        /// </summary>
-        protected readonly MailboxExchange Exchange;
-        
-        /// <inheritdoc />
-        protected MailboxBase(
-            ILogger logger,
-            IMailboxOptions options,
-            ISessionService session,
-            ConsumerOptions consumerOptions
-        ) : base(logger, options, session, consumerOptions)
-        {
-            ConfigureHeaders();
+        ConfigureHeaders();
 
-            try
-            {
-                Exchange = new MailboxExchange(logger, session, options, consumerOptions);
-                Queue = new MailboxQueue(logger, session, options, consumerOptions);
-                Consume();
-            }
-            catch
-            {
-               Dispose();
-               throw;
-            }
+        try
+        {
+            Exchange = new MailboxExchange(logger, session, options, consumerOptions);
+            Queue = new MailboxQueue(logger, session, options, consumerOptions);
+            Consume();
+        }
+        catch
+        {
+            Dispose();
+            throw;
+        }
+    }
+
+    private void ConfigureHeaders()
+    {
+        if (Session.Properties is null)
+        {
+            Logger.LogError("Unable to configure channel properties");
+            return;
         }
 
-        private void ConfigureHeaders()
+        Session.Properties.Headers ??= new Dictionary<string, object>();
+
+        foreach (var (key, value) in Options.SessionHeaders)
         {
-            if (Session.Properties is null)
-            {
-                Logger.LogError("Unable to configure channel properties");
-                return;
-            }
-
-            Session.Properties.Headers ??= new Dictionary<string, object>();
-
-            foreach (var (key, value) in Options.SessionHeaders)
-            {
-                Session.Properties.Headers.TryAdd(key, value);
-            }
-
-            Session.Properties.CorrelationId = Options.CorrelationId;
+            Session.Properties.Headers.TryAdd(key, value);
         }
 
-        private void Consume()
-        {
-            using var operation = Session.Telemetry.Request(Options, $"{nameof(MailboxBase)} Consumer bound");
+        Session.Properties.CorrelationId = Options.CorrelationId;
+    }
 
-            try
-            {
-                var consumerTag =
+    private void Consume()
+    {
+        using var operation = Session.Telemetry.Request(Options, $"{nameof(MailboxBase)} Consumer bound");
+
+        try
+        {
+            var consumerTag =
                 Session.Model.BasicConsume(Options.QueueName, ConsumerOptions.AutoAck, ConsumerTag, Consumer);
-                Logger.LogDebug("Consumer connected to queue : {QueueName} tag: {ConsumerTag}", Options.QueueName,
-                    consumerTag);
-            }
-            catch (Exception e)
-            {
-                throw new ConfigureMailboxException(e);
-            }
-
-            ConfigurePrefetch();
+            Logger.LogDebug("Consumer connected to queue : {QueueName} tag: {ConsumerTag}", Options.QueueName,
+                consumerTag);
+        }
+        catch (Exception e)
+        {
+            throw new ConfigureMailboxException(e);
         }
 
-        private void ConfigurePrefetch()
-        {
-            if (Options.ExchangeType is ExchangeType.RpcServer)
-            {
-                Session.Model?.BasicQos(0, 1, false);
-                return;
-            }
+        ConfigurePrefetch();
+    }
 
-            if (ConsumerOptions.PrefetchSize > 0 || ConsumerOptions.PrefetchCount > 0)
-            {
-                Session.Model?.BasicQos(ConsumerOptions.PrefetchSize, ConsumerOptions.PrefetchCount,
-                    ConsumerOptions.PrefetchGlobal);
-            }
+    private void ConfigurePrefetch()
+    {
+        if (Options.ExchangeType is ExchangeType.RpcServer)
+        {
+            Session.Model?.BasicQos(0, 1, false);
+            return;
+        }
+
+        if (ConsumerOptions.PrefetchSize > 0 || ConsumerOptions.PrefetchCount > 0)
+        {
+            Session.Model?.BasicQos(ConsumerOptions.PrefetchSize, ConsumerOptions.PrefetchCount,
+                ConsumerOptions.PrefetchGlobal);
         }
     }
 }

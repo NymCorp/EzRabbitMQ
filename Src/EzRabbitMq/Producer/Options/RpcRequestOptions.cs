@@ -1,42 +1,41 @@
 ﻿using FluentValidation;
 
-namespace EzRabbitMQ
+namespace EzRabbitMQ;
+
+/// <summary>
+/// RPC producer request options
+/// </summary>
+public record RpcRequestOptions : IProducerOptions
 {
     /// <summary>
-    /// RPC producer request options
+    /// Create a rpc request to server
     /// </summary>
-    public record RpcRequestOptions : IProducerOptions
+    /// <param name="correlationId">Client generated Id used by the server to send back the data</param>
+    public RpcRequestOptions(string correlationId)
     {
-        /// <summary>
-        /// Create a rpc request to server
-        /// </summary>
-        /// <param name="correlationId">Client generated Id used by the server to send back the data</param>
-        public RpcRequestOptions(string correlationId)
-        {
-            Properties.ReplyTo = Constants.RpcReplyToQueue;
-            
-            Properties.CorrelationId = correlationId;
+        Properties.ReplyTo = Constants.RpcReplyToQueue;
 
-            Properties.DeliveryMode = DeliveryMode.NonPersistent;
-        }
+        Properties.CorrelationId = correlationId;
 
-        /// <inheritdoc />
-        public string RoutingKey => string.Empty;
-
-        /// <inheritdoc />
-        public string ExchangeName => string.Empty;
-
-        /// <inheritdoc />
-        public ProducerProperties Properties { get; } = new();
+        Properties.DeliveryMode = DeliveryMode.NonPersistent;
     }
-    
-    // ReSharper disable once UnusedType.Global
-    internal class RpcRequestOptionsValidator : AbstractValidator<RpcRequestOptions>
+
+    /// <inheritdoc />
+    public string RoutingKey => string.Empty;
+
+    /// <inheritdoc />
+    public string ExchangeName => string.Empty;
+
+    /// <inheritdoc />
+    public ProducerProperties Properties { get; } = new();
+}
+
+// ReSharper disable once UnusedType.Global
+internal class RpcRequestOptionsValidator : AbstractValidator<RpcRequestOptions>
+{
+    public RpcRequestOptionsValidator()
     {
-        public RpcRequestOptionsValidator()
-        {
-            RuleFor(x => x.Properties.CorrelationId).NotNull().NotEmpty()
-                .WithMessage("Unable to send a RPC request without a correlation id");
-        }
+        RuleFor(x => x.Properties.CorrelationId).NotNull().NotEmpty()
+            .WithMessage("Unable to send a RPC request without a correlation id");
     }
 }
