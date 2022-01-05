@@ -1,142 +1,136 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Globalization;
-using System.Linq;
-using System.Runtime.Serialization;
+﻿using System.Runtime.Serialization;
 using EzRabbitMQ.Exceptions;
 using EzRabbitMQ.Extensions;
-using Microsoft.Extensions.Logging;
 using RabbitMQ.Client;
 
-namespace EzRabbitMQ
+namespace EzRabbitMQ;
+
+/// <inheritdoc />
+public class Producer : IDisposable
 {
-    /// <inheritdoc />
-    public class Producer : IDisposable
+    private readonly ILogger<Producer> _logger;
+    private readonly IProducerOptions _options;
+    private readonly ISessionService _session;
+
+    /// <summary>
+    /// Producer can publish messages to rabbitMQ server
+    /// </summary>
+    /// <param name="logger">Logger used depending on LogLevel</param>
+    /// <param name="options">Producer options see <see cref="IProducerOptions"/></param>
+    /// <param name="session">Current session with rabbitMQ server</param>
+    public Producer(
+        ILogger<Producer> logger,
+        IProducerOptions options,
+        ISessionService session
+    )
     {
-        private readonly ILogger<Producer> _logger;
-        private readonly IProducerOptions _options;
-        private readonly ISessionService _session;
+        _logger = logger;
+        _options = options;
+        _session = session;
 
-        /// <summary>
-        /// Producer can publish messages to rabbitMQ server
-        /// </summary>
-        /// <param name="logger">Logger used depending on LogLevel</param>
-        /// <param name="options">Producer options see <see cref="IProducerOptions"/></param>
-        /// <param name="session">Current session with rabbitMQ server</param>
-        public Producer(
-            ILogger<Producer> logger,
-            IProducerOptions options,
-            ISessionService session
-        )
+        SetPropertiesFromOptions();
+    }
+
+    /// <summary>
+    /// Publish data pass as parameter 
+    /// </summary>
+    /// <param name="data">Data sending to the rabbitMQ</param>
+    /// <typeparam name="T">Type of the data you are sending</typeparam>
+    public void Publish<T>(T data)
+    {
+        using var operation = _session.Telemetry.Dependency(_options, "publish message");
+
+        if (data is null)
         {
-            _logger = logger;
-            _options = options;
-            _session = session;
-
-            SetPropertiesFromOptions();
+            _logger.LogWarning("Unable to publish null message");
+            return;
         }
 
-        /// <summary>
-        /// Publish data pass as parameter 
-        /// </summary>
-        /// <param name="data">Data sending to the rabbitMQ</param>
-        /// <typeparam name="T">Type of the data you are sending</typeparam>
-        public void Publish<T>(T data)
+        _session.Properties?.SetTelemetry(operation.Telemetry.Context.Operation);
+
+        try
         {
-            using var operation = _session.Telemetry.Dependency(_options, "publish message");
-        
-            if (data is null)
+            var body = _session.Config.SerializeData(data);
+
+            if (body is null)
             {
-                _logger.LogWarning("Unable to publish null message");
-                return;
+                throw new SerializationException("Error occured while serializing data");
             }
 
-            _session.Properties?.SetTelemetry(operation.Telemetry.Context.Operation);
-            
-            try
+            _logger.LogDebug(
+                "message sent to rabbit: exchange '{ExchangeName}' routingKey: '{RoutingKey}', size: {Bytes} bytes",
+                _options.ExchangeName, _options.RoutingKey, body.Length);
+
+            var dataType = data.GetType().AssemblyQualifiedName;
+
+            if (dataType is null)
             {
-                var body = _session.Config.SerializeData(data);
-
-                if (body is null)
-                {
-                    throw new SerializationException("Error occured while serializing data");
-                }
-
-                _logger.LogDebug(
-                    "message sent to rabbit: exchange '{ExchangeName}' routingKey: '{RoutingKey}', size: {Bytes} bytes",
-                    _options.ExchangeName, _options.RoutingKey, body.Length);
-
-                var dataType = data.GetType().AssemblyQualifiedName;
-
-                if (dataType is null)
-                {
-                    throw new InvalidProgramException("Unable to get data type");
-                }
-
-                _session.Polly.TryExecute<PublishException>(() => Publish(dataType, body));
+                throw new InvalidProgramException("Unable to get data type");
             }
-            catch (Exception e)
-            {
-                operation.Exception(e);
-                throw;
-            }
+
+            _session.Polly.TryExecute<PublishException>(() => Publish(dataType, body));
+        }
+        catch (Exception e)
+        {
+            operation.Exception(e);
+            throw;
+        }
+    }
+
+    private void SetPropertiesFromOptions()
+    {
+        if (_session.Properties is null)
+        {
+            _logger.LogError("Unable to set session properties because channel properties field is null");
+            return;
         }
 
-        private void SetPropertiesFromOptions()
+        _session.Properties.DeliveryMode = (byte) _options.Properties.DeliveryMode;
+
+        if (_options.Properties.Expiration.HasValue)
         {
-            if (_session.Properties is null)
-            {
-                _logger.LogError("Unable to set session properties because channel properties field is null");
-                return;
-            }
-            
-            _session.Properties.DeliveryMode = (byte) _options.Properties.DeliveryMode;
+            _session.Properties.Expiration =
+                _options.Properties.Expiration.Value.TotalMilliseconds.ToString(CultureInfo.InvariantCulture);
+        }
 
-            if (_options.Properties.Expiration.HasValue)
+        if (_options.Properties.Headers.Any())
+        {
+            foreach (var (key, value) in _options.Properties.Headers)
             {
-                _session.Properties.Expiration =
-                    _options.Properties.Expiration.Value.TotalMilliseconds.ToString(CultureInfo.InvariantCulture);
-            }
+                _session.Properties.Headers ??= new Dictionary<string, object>();
 
-            if (_options.Properties.Headers.Any())
-            {
-                foreach (var (key, value) in _options.Properties.Headers)
-                {
-                    _session.Properties.Headers ??= new Dictionary<string, object>();
-
-                    _session.Properties.Headers.Add(key, value);
-                }
-            }
-
-            if (_options.Properties.Priority.HasValue)
-            {
-                _session.Properties.Priority = _options.Properties.Priority.Value;
-            }
-
-            if (!string.IsNullOrWhiteSpace(_options.Properties.ReplyTo))
-            {
-                _session.Properties.CorrelationId = _options.Properties.CorrelationId;
-                _session.Properties.ReplyTo = _options.Properties.ReplyTo;
+                _session.Properties.Headers.Add(key, value);
             }
         }
 
-        private void Publish(string type, byte[] body)
+        if (_options.Properties.Priority.HasValue)
         {
-            if (_session.Properties is null)
-            {
-                _logger.LogError("Unable to publish message without channel's session properties");
-                return;
-            }
-            
-            _session.Properties.Type = type;
-            _session.Model.BasicPublish(_options.ExchangeName, _options.RoutingKey, _session.Properties, new ReadOnlyMemory<byte>(body));
+            _session.Properties.Priority = _options.Properties.Priority.Value;
         }
 
-        /// <inheritdoc />
-        public void Dispose()
+        if (!string.IsNullOrWhiteSpace(_options.Properties.ReplyTo))
         {
-            _session.Dispose();
-            _logger.LogDebug("Producer disposed");
+            _session.Properties.CorrelationId = _options.Properties.CorrelationId;
+            _session.Properties.ReplyTo = _options.Properties.ReplyTo;
         }
+    }
+
+    private void Publish(string type, byte[] body)
+    {
+        if (_session.Properties is null)
+        {
+            _logger.LogError("Unable to publish message without channel's session properties");
+            return;
+        }
+
+        _session.Properties.Type = type;
+        _session.Model.BasicPublish(_options.ExchangeName, _options.RoutingKey, _session.Properties, new ReadOnlyMemory<byte>(body));
+    }
+
+    /// <inheritdoc />
+    public void Dispose()
+    {
+        _session.Dispose();
+        _logger.LogDebug("Producer disposed");
     }
 }

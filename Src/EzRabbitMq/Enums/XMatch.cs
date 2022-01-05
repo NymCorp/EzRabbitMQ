@@ -1,29 +1,27 @@
-﻿using System;
+﻿namespace EzRabbitMQ;
 
-namespace EzRabbitMQ
+/// <summary>
+/// Headers match kind
+/// </summary>
+public enum XMatch
 {
     /// <summary>
-    /// Headers match kind
+    /// Must match all headers
     /// </summary>
-    public enum XMatch
-    {
-        /// <summary>
-        /// Must match all headers
-        /// </summary>
-        All,
-        /// <summary>
-        /// Must match one of the headers
-        /// </summary>
-        Any
-    }
+    All,
 
-    internal static class XMatchExtensions
+    /// <summary>
+    /// Must match one of the headers
+    /// </summary>
+    Any
+}
+
+internal static class XMatchExtensions
+{
+    public static string GetTextValue(this XMatch match) => match switch
     {
-        public static string GetTextValue(this XMatch match) => match switch
-        {
-            XMatch.Any => "any",
-            XMatch.All => "all",
-            _ => throw new InvalidOperationException("XMatch value cannot be found") 
-        };
-    }    
+        XMatch.Any => "any",
+        XMatch.All => "all",
+        _ => throw new InvalidOperationException("XMatch value cannot be found")
+    };
 }

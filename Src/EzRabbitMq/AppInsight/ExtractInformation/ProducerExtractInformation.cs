@@ -1,50 +1,46 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Reflection;
-using Microsoft.ApplicationInsights.DataContracts;
+﻿using Microsoft.ApplicationInsights.DataContracts;
 
-namespace EzRabbitMQ
+namespace EzRabbitMQ;
+
+/// <inheritdoc />
+public class ProducerExtractInformation : ExtractTelemetryInformationBase<IProducerOptions>
 {
+    private static readonly Lazy<string> EntryAssembly = new(() => Assembly.GetEntryAssembly()?.GetName().Name ?? "unknown");
+
     /// <inheritdoc />
-    public class ProducerExtractInformation : ExtractTelemetryInformationBase<IProducerOptions>
+    public override RequestTelemetry CreateRequest(IProducerOptions data, string operationName)
     {
-        private static readonly Lazy<string> EntryAssembly = new(() => Assembly.GetEntryAssembly()?.GetName().Name ?? "unknown");
-
-        /// <inheritdoc />
-        public override RequestTelemetry CreateRequest(IProducerOptions data, string operationName)
+        var request = new RequestTelemetry
         {
-            var request = new RequestTelemetry
-            {
-                Name = operationName
-            };
+            Name = operationName
+        };
 
-            PopulateProperties(data, request.Properties);
-            return request;
-        }
+        PopulateProperties(data, request.Properties);
+        return request;
+    }
 
-        /// <inheritdoc />
-        public override DependencyTelemetry CreateDependency(IProducerOptions data, string operationName)
+    /// <inheritdoc />
+    public override DependencyTelemetry CreateDependency(IProducerOptions data, string operationName)
+    {
+        var dependency = new DependencyTelemetry
         {
-            var dependency = new DependencyTelemetry
-            {
-                Name = operationName,
-                Target = $"{data.ExchangeName}-{data.RoutingKey}",
-                Data = $"[{EntryAssembly.Value}]-{data.ExchangeName}-{data.RoutingKey}",
-                Type = operationName,
-                ResultCode = "200"
-            };
-            
-            PopulateProperties(data, dependency.Properties);
+            Name = operationName,
+            Target = $"{data.ExchangeName}-{data.RoutingKey}",
+            Data = $"[{EntryAssembly.Value}]-{data.ExchangeName}-{data.RoutingKey}",
+            Type = operationName,
+            ResultCode = "200"
+        };
 
-            return dependency;
-        }
+        PopulateProperties(data, dependency.Properties);
 
-        /// <inheritdoc />
-        protected override void PopulateProperties(IProducerOptions data, IDictionary<string, string> properties)
-        {
-            properties["assembly"] = EntryAssembly.Value;
-            properties["exchange"] = data.ExchangeName;
-            properties["routing-key"] = data.RoutingKey;
-        }
+        return dependency;
+    }
+
+    /// <inheritdoc />
+    protected override void PopulateProperties(IProducerOptions data, IDictionary<string, string> properties)
+    {
+        properties["assembly"] = EntryAssembly.Value;
+        properties["exchange"] = data.ExchangeName;
+        properties["routing-key"] = data.RoutingKey;
     }
 }

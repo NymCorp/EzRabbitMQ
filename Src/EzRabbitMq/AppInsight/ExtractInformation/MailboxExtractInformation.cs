@@ -1,52 +1,48 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Reflection;
-using Microsoft.ApplicationInsights.DataContracts;
+﻿using Microsoft.ApplicationInsights.DataContracts;
 
-namespace EzRabbitMQ
+namespace EzRabbitMQ;
+
+/// <inheritdoc />
+public class MailboxExtractInformation : ExtractTelemetryInformationBase<IMailboxOptions>
 {
+    private const string NoExchange = "no-exchange";
+    private const string NoRoutingKey = "no-routing-key";
+
+    private readonly Lazy<string> _entryAssemblyName =
+        new(() => Assembly.GetEntryAssembly()?.GetName().Name ?? "unknown");
+
     /// <inheritdoc />
-    public class MailboxExtractInformation : ExtractTelemetryInformationBase<IMailboxOptions>
+    public override RequestTelemetry CreateRequest(IMailboxOptions data, string operationName)
     {
-        private const string NoExchange = "no-exchange";
-        private const string NoRoutingKey = "no-routing-key";
+        var request = new RequestTelemetry {Name = operationName};
+        PopulateProperties(data, request.Properties);
+        return request;
+    }
 
-        private readonly Lazy<string> _entryAssemblyName =
-            new(() => Assembly.GetEntryAssembly()?.GetName().Name ?? "unknown");
-
-        /// <inheritdoc />
-        public override RequestTelemetry CreateRequest(IMailboxOptions data, string operationName)
+    /// <inheritdoc />
+    public override DependencyTelemetry CreateDependency(IMailboxOptions data, string operationName)
+    {
+        var dependency = new DependencyTelemetry
         {
-            var request = new RequestTelemetry { Name = operationName };
-            PopulateProperties(data, request.Properties);
-            return request;
-        }
+            Name = data.QueueName,
+            Target = $"{data.ExchangeName ?? "RPC"}({data.ExchangeType})-{data.QueueName}-{data.RoutingKey}",
+            Data = $"[{_entryAssemblyName.Value}]-{data.ExchangeName ?? NoExchange}({data.ExchangeType})-{data.QueueName}-{data.RoutingKey ?? NoRoutingKey}",
+            ResultCode = "200",
+            Type = operationName
+        };
 
-        /// <inheritdoc />
-        public override DependencyTelemetry CreateDependency(IMailboxOptions data, string operationName)
-        {
-            var dependency = new DependencyTelemetry
-            {
-                Name = data.QueueName,
-                Target = $"{data.ExchangeName ?? "RPC"}({data.ExchangeType})-{data.QueueName}-{data.RoutingKey}",
-                Data = $"[{_entryAssemblyName.Value}]-{data.ExchangeName ?? NoExchange}({data.ExchangeType})-{data.QueueName}-{data.RoutingKey ?? NoRoutingKey}",
-                ResultCode = "200",
-                Type = operationName
-            };
+        PopulateProperties(data, dependency.Properties);
 
-            PopulateProperties(data, dependency.Properties);
+        return dependency;
+    }
 
-            return dependency;
-        }
-
-        /// <inheritdoc />
-        protected override void PopulateProperties(IMailboxOptions data, IDictionary<string, string> properties)
-        {
-            properties["assembly"] = _entryAssemblyName.Value;
-            properties["exchange"] = data.ExchangeName ?? NoExchange;
-            properties["exchange-type"] = data.ExchangeType.ToString();
-            properties["queue-name"] = data.QueueName;
-            properties["routing-key"] = data.RoutingKey ?? NoRoutingKey;
-        }
+    /// <inheritdoc />
+    protected override void PopulateProperties(IMailboxOptions data, IDictionary<string, string> properties)
+    {
+        properties["assembly"] = _entryAssemblyName.Value;
+        properties["exchange"] = data.ExchangeName ?? NoExchange;
+        properties["exchange-type"] = data.ExchangeType.ToString();
+        properties["queue-name"] = data.QueueName;
+        properties["routing-key"] = data.RoutingKey ?? NoRoutingKey;
     }
 }

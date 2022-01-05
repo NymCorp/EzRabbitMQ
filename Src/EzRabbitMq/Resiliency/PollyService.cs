@@ -1,50 +1,45 @@
-﻿
-using System;
-using System.Threading.Tasks;
+﻿namespace EzRabbitMQ.Resiliency;
 
-namespace EzRabbitMQ.Resiliency
+/// <inheritdoc />
+public class PollyService : IPollyService
 {
+    private readonly EzRabbitMQConfig _config;
+
+    /// <summary>
+    /// Create the polly service 
+    /// </summary>
+    /// <param name="config"></param>
+    public PollyService(EzRabbitMQConfig config) => _config = config;
+
     /// <inheritdoc />
-    public class PollyService : IPollyService
+    public async Task ExecuteAsync(Func<Task> action)
     {
-        private readonly EzRabbitMQConfig _config;
+        await _config.PollyPolicy.ExecuteAsync(action);
+    }
 
-        /// <summary>
-        /// Create the polly service 
-        /// </summary>
-        /// <param name="config"></param>
-        public PollyService(EzRabbitMQConfig config) => _config = config;
+    /// <inheritdoc />
+    public void Execute(Action action)
+    {
+        ExecuteAsync(() => RunPolicy(action)).GetAwaiter().GetResult();
+    }
 
-        /// <inheritdoc />
-        public async Task ExecuteAsync(Func<Task> action)
+    /// <inheritdoc />
+    public void TryExecute<T>(Action action) where T : Exception
+    {
+        try
         {
-            await _config.PollyPolicy.ExecuteAsync(action);
+            Execute(action);
         }
-
-        /// <inheritdoc />
-        public void Execute(Action action)
+        catch (Exception e)
         {
-            ExecuteAsync(() => RunPolicy(action)).GetAwaiter().GetResult();
-        }
+            var specificException = Activator.CreateInstance(typeof(T), e) as Exception;
 
-        /// <inheritdoc />
-        public void TryExecute<T>(Action action) where T : Exception
-        {
-            try
-            {
-                Execute(action);
-            }
-            catch (Exception e)
-            {
-                var specificException = Activator.CreateInstance(typeof(T), e) as Exception;
-                
-                throw specificException ?? e;
-            }
+            throw specificException ?? e;
         }
+    }
 
-        private static Task RunPolicy(Action action)
-        {
-            return Task.Run(action);
-        }
+    private static Task RunPolicy(Action action)
+    {
+        return Task.Run(action);
     }
 }

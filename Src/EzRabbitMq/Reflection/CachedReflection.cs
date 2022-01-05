@@ -1,61 +1,55 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Reflection;
-using EzRabbitMQ.Exceptions;
+﻿namespace EzRabbitMQ.Reflection;
 
-namespace EzRabbitMQ.Reflection
+/// <summary>
+/// Cache used to optimize message serialization/deserialization and handle discovery
+/// </summary>
+public static class CachedReflection
 {
+    private static readonly Lazy<Dictionary<string, MethodInfo>> HandleCache = new(() => new());
+    private static readonly Lazy<Dictionary<string, Type>> TypeCache = new(() => new());
+
     /// <summary>
-    /// Cache used to optimize message serialization/deserialization and handle discovery
+    /// Find handle matching parameters filters and store the methodInfo in cache
+    /// to improve performance.
     /// </summary>
-    public static class CachedReflection
+    /// <param name="realImp">Type scanned to find method matching parameter type.</param>
+    /// <param name="paramTypeText">Parameter type used to find method to call.</param>
+    /// <param name="handleName">Name of the method you want to call.</param>
+    /// <returns>MethodInfo matching parameters.</returns>
+    public static MethodInfo? FindMethodToInvoke(Type realImp, string paramTypeText, string handleName)
     {
-        private static readonly Lazy<Dictionary<string, MethodInfo>> HandleCache = new(() => new());
-        private static readonly Lazy<Dictionary<string, Type>> TypeCache = new(() => new());
+        var key = $"{realImp.Name}-{paramTypeText}-{handleName}";
 
-        /// <summary>
-        /// Find handle matching parameters filters and store the methodInfo in cache
-        /// to improve performance.
-        /// </summary>
-        /// <param name="realImp">Type scanned to find method matching parameter type.</param>
-        /// <param name="paramTypeText">Parameter type used to find method to call.</param>
-        /// <param name="handleName">Name of the method you want to call.</param>
-        /// <returns>MethodInfo matching parameters.</returns>
-        public static MethodInfo? FindMethodToInvoke(Type realImp, string paramTypeText, string handleName)
-        {
-            var key = $"{realImp.Name}-{paramTypeText}-{handleName}";
-            
-            if (HandleCache.Value.TryGetValue(key, out var handle)) return handle;
-            
-            var paramType = GetType(paramTypeText);
+        if (HandleCache.Value.TryGetValue(key, out var handle)) return handle;
 
-            if (paramType is null) return null;
+        var paramType = GetType(paramTypeText);
 
-            var method = realImp.FindMatchingMethod(handleName, paramType);
+        if (paramType is null) return null;
 
-            if (method is null) return null;
+        var method = realImp.FindMatchingMethod(handleName, paramType);
 
-            HandleCache.Value[key] = method;
+        if (method is null) return null;
 
-            return method;
-        }
+        HandleCache.Value[key] = method;
 
-        /// <summary>
-        /// Call GetType and cache the value.
-        /// </summary>
-        /// <param name="typeAssemblyQualifiedName">the assembly qualified of the type.</param>
-        /// <returns>Nullable found type.</returns>
-        public static Type? GetType(string typeAssemblyQualifiedName)
-        {
-            if (TypeCache.Value.TryGetValue(typeAssemblyQualifiedName, out var cachedType)) return cachedType;
+        return method;
+    }
 
-            var type = Type.GetType(typeAssemblyQualifiedName);
+    /// <summary>
+    /// Call GetType and cache the value.
+    /// </summary>
+    /// <param name="typeAssemblyQualifiedName">the assembly qualified of the type.</param>
+    /// <returns>Nullable found type.</returns>
+    public static Type? GetType(string typeAssemblyQualifiedName)
+    {
+        if (TypeCache.Value.TryGetValue(typeAssemblyQualifiedName, out var cachedType)) return cachedType;
 
-            if (type is null) return null;
+        var type = Type.GetType(typeAssemblyQualifiedName);
 
-            TypeCache.Value[typeAssemblyQualifiedName] = type;
+        if (type is null) return null;
 
-            return type;
-        }
+        TypeCache.Value[typeAssemblyQualifiedName] = type;
+
+        return type;
     }
 }

@@ -1,139 +1,132 @@
-using System;
-using System.Collections.Concurrent;
-using System.Diagnostics;
 using System.Text.Json;
-using System.Threading;
-using System.Threading.Tasks;
 using EzRabbitMQ.Exceptions;
 using EzRabbitMQ.Extensions;
 using EzRabbitMQ.Reflection;
-using Microsoft.Extensions.Logging;
 using RabbitMQ.Client.Events;
 
-namespace EzRabbitMQ
+namespace EzRabbitMQ;
+
+/// <summary>
+/// Rpc client able to create request and receive response 
+/// </summary>
+public class RpcClient : MailboxBase
 {
+    private readonly ConcurrentDictionary<Type, BlockingCollection<object>> _listeners = new();
+
     /// <summary>
-    /// Rpc client able to create request and receive response 
+    /// RpcClient can send request and wait for response
     /// </summary>
-    public class RpcClient : MailboxBase
+    public RpcClient(
+        ILogger<RpcClient> logger,
+        RpcClientMailboxOptions options,
+        ISessionService session,
+        ConsumerOptions consumerOptions
+    )
+        : base(logger, options, session, consumerOptions)
     {
-        private readonly ConcurrentDictionary<Type, BlockingCollection<object>> _listeners = new();
+    }
 
-        /// <summary>
-        /// RpcClient can send request and wait for response
-        /// </summary>
-        public RpcClient(
-            ILogger<RpcClient> logger,
-            RpcClientMailboxOptions options,
-            ISessionService session,
-            ConsumerOptions consumerOptions
-        )
-            : base(logger, options, session, consumerOptions)
+    /// <summary>
+    /// Send request to the server and wait for a response.
+    /// </summary>
+    /// <param name="request">Request for the rpc server</param>
+    /// <param name="cancellationToken">Cancellation Token</param>
+    /// <returns>Task of nullable</returns>
+    public Task<T?> CallAsync<T>(object request, CancellationToken cancellationToken) where T : class
+    {
+        return Task.Run(() => Call<T>(request, cancellationToken), cancellationToken);
+    }
+
+    /// <summary>
+    /// Send request to the server and wait for a response.
+    /// </summary>
+    /// <param name="request">Request object you want to send to the server</param>
+    /// <param name="externalCancellationToken">Optional CancellationToken preventing from waiting until request timeout if cancellation is raised</param>
+    /// <typeparam name="T">IRpcResponse type</typeparam>
+    /// <returns>Nullable IRpcResponse</returns>
+    /// <exception cref="RpcClientCastException">The response received doesnt match with the method argument T type</exception>
+    public T? Call<T>(object request, CancellationToken externalCancellationToken = default) where T : class
+    {
+        if (Session.Config.RpcPollyPolicy is not null)
         {
+            return Session.Config.RpcPollyPolicy.ExecuteAsync(async () => (await CallInternal<T>(request, externalCancellationToken))!).GetAwaiter().GetResult() as T;
         }
 
-        /// <summary>
-        /// Send request to the server and wait for a response.
-        /// </summary>
-        /// <param name="request">Request for the rpc server</param>
-        /// <param name="cancellationToken">Cancellation Token</param>
-        /// <returns>Task of nullable</returns>
-        public Task<T?> CallAsync<T>(object request, CancellationToken cancellationToken) where T : class
+        return CallInternal<T>(request, externalCancellationToken).GetAwaiter().GetResult();
+    }
+
+    private Task<T?> CallInternal<T>(object request, CancellationToken externalCancellationToken = default) where T : class
+    {
+        using var op = Session.Telemetry.Dependency(Options,
+            "RpcClient request");
+
+        if (Session.Model is null) return Task.FromResult<T?>(default);
+
+        var blockingColl = _listeners.GetOrAdd(typeof(T), new BlockingCollection<object>());
+
+        var sw = Stopwatch.StartNew();
+
+        var body = Session.Config.SerializeData(request);
+        var props = Session.Model.CreateBasicProperties();
+
+        props.ReplyTo = Constants.RpcReplyToQueue;
+        props.CorrelationId = Options.CorrelationId;
+        props.Type = request.GetType().AssemblyQualifiedName;
+
+        Session.Model.BasicPublish(ExchangeType.RpcServer.Name(), Options.RoutingKey, false, props, new ReadOnlyMemory<byte>(body));
+        Logger.LogDebug("Message sent to {Exchange} routing Key: {RoutingKey}", ExchangeType.RpcServer.Name(), Options.RoutingKey);
+
+        var timeoutCts = new CancellationTokenSource(ConsumerOptions.RpcCallTimeout);
+        using var sharedCts = CancellationTokenSource.CreateLinkedTokenSource(timeoutCts.Token, externalCancellationToken);
+
+        try
         {
-            return Task.Run(() => Call<T>(request, cancellationToken), cancellationToken);
+            var response = blockingColl.Take(sharedCts.Token);
+
+            sw.Stop();
+
+            Logger.LogDebug("Call {CorrelationId} took {Elapsed}ms", Options.CorrelationId, sw.ElapsedMilliseconds.ToString());
+
+            T typedResponse = (response as T) ?? throw new RpcClientCastException(typeof(T));
+
+            return Task.FromResult<T?>(typedResponse);
         }
-
-        /// <summary>
-        /// Send request to the server and wait for a response.
-        /// </summary>
-        /// <param name="request">Request object you want to send to the server</param>
-        /// <param name="externalCancellationToken">Optional CancellationToken preventing from waiting until request timeout if cancellation is raised</param>
-        /// <typeparam name="T">IRpcResponse type</typeparam>
-        /// <returns>Nullable IRpcResponse</returns>
-        /// <exception cref="RpcClientCastException">The response received doesnt match with the method argument T type</exception>
-        public T? Call<T>(object request, CancellationToken externalCancellationToken = default) where T : class
+        catch (OperationCanceledException)
         {
-            if (Session.Config.RpcPollyPolicy is not null)
-            {
-                return Session.Config.RpcPollyPolicy.ExecuteAsync(async () => (await CallInternal<T>(request, externalCancellationToken))!).GetAwaiter().GetResult() as T;
-            }
-            
-            return CallInternal<T>(request, externalCancellationToken).GetAwaiter().GetResult();
+            Logger.LogWarning("RpcClient request has been cancelled after: {Timeout}ms for request: {Request}",
+                sw.ElapsedMilliseconds, JsonSerializer.Serialize(request));
+
+            return Task.FromResult<T?>(default);
         }
+    }
 
-        private Task<T?> CallInternal<T>(object request, CancellationToken externalCancellationToken = default) where T : class
+    /// <inheritdoc />
+    protected override Task MessageHandle(object? sender, BasicDeliverEventArgs @event)
+    {
+        if (@event.BasicProperties.CorrelationId != Options.CorrelationId)
         {
-            using var op = Session.Telemetry.Dependency(Options,
-                "RpcClient request");
+            Logger.LogDebug("Received RPC call for another consumer: {CorrelationId}", Options.CorrelationId);
 
-            if (Session.Model is null) return Task.FromResult<T?>(default);
-
-            var blockingColl = _listeners.GetOrAdd(typeof(T), new BlockingCollection<object>());
-
-            var sw = Stopwatch.StartNew();
-
-            var body = Session.Config.SerializeData(request);
-            var props = Session.Model.CreateBasicProperties();
-            
-            props.ReplyTo = Constants.RpcReplyToQueue;
-            props.CorrelationId = Options.CorrelationId;
-            props.Type = request.GetType().AssemblyQualifiedName;
-
-            Session.Model.BasicPublish(ExchangeType.RpcServer.Name(), Options.RoutingKey, false, props, new ReadOnlyMemory<byte>(body));
-            Logger.LogDebug("Message sent to {Exchange} routing Key: {RoutingKey}", ExchangeType.RpcServer.Name(), Options.RoutingKey);
-            
-            var timeoutCts = new CancellationTokenSource(ConsumerOptions.RpcCallTimeout);
-            using var sharedCts = CancellationTokenSource.CreateLinkedTokenSource(timeoutCts.Token, externalCancellationToken);
-
-            try
-            {
-                var response = blockingColl.Take(sharedCts.Token);
-
-                sw.Stop();
-
-                Logger.LogDebug("Call {CorrelationId} took {Elapsed}ms", Options.CorrelationId, sw.ElapsedMilliseconds.ToString());
-
-                T typedResponse = (response as T) ?? throw new RpcClientCastException(typeof(T));
-                
-                return Task.FromResult<T?>(typedResponse);
-            }
-            catch (OperationCanceledException)
-            {
-                Logger.LogWarning("RpcClient request has been cancelled after: {Timeout}ms for request: {Request}",
-                    sw.ElapsedMilliseconds, JsonSerializer.Serialize(request));
-
-                return Task.FromResult<T?>(default);
-            }
-        }
-
-        /// <inheritdoc />
-        protected override Task MessageHandle(object? sender, BasicDeliverEventArgs @event)
-        {
-            if (@event.BasicProperties.CorrelationId != Options.CorrelationId)
-            {
-                Logger.LogDebug("Received RPC call for another consumer: {CorrelationId}", Options.CorrelationId);
-                
-                return Task.CompletedTask;
-            }
-
-            var response = @event.GetData(Session.Config);
-
-            var messageType = CachedReflection.GetType(@event.BasicProperties.Type);
-
-            if (messageType is null)
-            {
-                Logger.LogError("Unable to find the type used inside the event message in loaded assembly types");
-                return Task.CompletedTask;
-            }
-
-            if (_listeners.TryGetValue(messageType, out var listener))
-            {
-                listener.Add(response);
-            }
-            
-            Logger.LogDebug("Rpc response received for correlationId : {CorrelationId}", Options.CorrelationId);
-            
             return Task.CompletedTask;
         }
+
+        var response = @event.GetData(Session.Config);
+
+        var messageType = CachedReflection.GetType(@event.BasicProperties.Type);
+
+        if (messageType is null)
+        {
+            Logger.LogError("Unable to find the type used inside the event message in loaded assembly types");
+            return Task.CompletedTask;
+        }
+
+        if (_listeners.TryGetValue(messageType, out var listener))
+        {
+            listener.Add(response);
+        }
+
+        Logger.LogDebug("Rpc response received for correlationId : {CorrelationId}", Options.CorrelationId);
+
+        return Task.CompletedTask;
     }
 }

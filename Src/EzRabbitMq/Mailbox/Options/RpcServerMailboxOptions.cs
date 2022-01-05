@@ -1,45 +1,43 @@
-﻿using System.Collections.Generic;
-using FluentValidation;
+﻿using FluentValidation;
 
-namespace EzRabbitMQ
+namespace EzRabbitMQ;
+
+/// <summary>
+/// RPC mailbox options
+/// </summary>
+public record RpcServerMailboxOptions : IMailboxOptions
 {
     /// <summary>
-    /// RPC mailbox options
+    /// Rpc Server options
     /// </summary>
-    public record RpcServerMailboxOptions : IMailboxOptions
+    public RpcServerMailboxOptions(string? queueName = null)
     {
-        /// <summary>
-        /// Rpc Server options
-        /// </summary>
-        public RpcServerMailboxOptions(string? queueName = null)
-        {
-            QueueName = queueName ?? Constants.RpcDefaultRoutingKey;
-        }
-
-        /// <inheritdoc />
-        public string ExchangeName => ExchangeType.RpcServer.Name();
-
-        /// <inheritdoc />
-        public ExchangeType ExchangeType => ExchangeType.RpcServer;
-
-        /// <inheritdoc />
-        public string RoutingKey => QueueName;
-
-        /// <inheritdoc />
-        public string QueueName { get; }
-
-        /// <inheritdoc />
-        public string CorrelationId => string.Empty;
-
-        /// <inheritdoc />
-        public Dictionary<string, string> QueueBindingHeaders { get; } = new();
-
-        /// <inheritdoc />
-        public Dictionary<string, string> SessionHeaders { get; } = new();
+        QueueName = queueName ?? Constants.RpcDefaultRoutingKey;
     }
-    
-    // ReSharper disable once UnusedType.Global
-    internal class RpcServerMailboxOptionsValidator : AbstractValidator<RpcServerMailboxOptions>
-    {
-    }
+
+    /// <inheritdoc />
+    public string ExchangeName => ExchangeType.RpcServer.Name();
+
+    /// <inheritdoc />
+    public ExchangeType ExchangeType => ExchangeType.RpcServer;
+
+    /// <inheritdoc />
+    public string RoutingKey => QueueName;
+
+    /// <inheritdoc />
+    public string QueueName { get; }
+
+    /// <inheritdoc />
+    public string CorrelationId => string.Empty;
+
+    /// <inheritdoc />
+    public Dictionary<string, string> QueueBindingHeaders { get; } = new();
+
+    /// <inheritdoc />
+    public Dictionary<string, string> SessionHeaders { get; } = new();
+}
+
+// ReSharper disable once UnusedType.Global
+internal class RpcServerMailboxOptionsValidator : AbstractValidator<RpcServerMailboxOptions>
+{
 }

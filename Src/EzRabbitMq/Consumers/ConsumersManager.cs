@@ -1,28 +1,25 @@
-﻿using System.Reflection;
+﻿namespace EzRabbitMQ;
 
-namespace EzRabbitMQ
+/// <summary>
+/// Provides consumer tags.
+/// </summary>
+public class ConsumersManager
 {
     /// <summary>
-    /// Provides consumer tags.
+    /// Return a assembly unique id for the consumer.
     /// </summary>
-    public class ConsumersManager
+    /// <returns>Assembly unique id</returns>
+    public static string CreateTag()
     {
-        /// <summary>
-        /// Return a assembly unique id for the consumer.
-        /// </summary>
-        /// <returns>Assembly unique id</returns>
-        public static string CreateTag()
+        var entryName = Assembly.GetEntryAssembly()?.GetName().Name ?? "unknown-entry";
+
+        if (!AppState.MailBoxIndexes.Value.ContainsKey(entryName))
         {
-            var entryName = Assembly.GetEntryAssembly()?.GetName().Name ?? "unknown-entry";
-
-            if (!AppState.MailBoxIndexes.Value.ContainsKey(entryName))
-            {
-                AppState.MailBoxIndexes.Value.TryAdd(entryName, 0);
-            }
-
-            ++AppState.MailBoxIndexes.Value[entryName];
-
-            return $"{entryName}({AppState.MailBoxIndexes.Value[entryName]})";
+            AppState.MailBoxIndexes.Value.TryAdd(entryName, 0);
         }
+
+        ++AppState.MailBoxIndexes.Value[entryName];
+
+        return $"{entryName}({AppState.MailBoxIndexes.Value[entryName]})";
     }
 }
