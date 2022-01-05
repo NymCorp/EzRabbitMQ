@@ -2,7 +2,7 @@
 
 <img src="https://github.com/NymCorp/EzRabbitMQ/blob/main/docs/images/logo.png" width="200"  alt="EzRabbitMQ logo"/>
 
-[![.NET](https://github.com/BrunevalPE/EzRabbitMq/actions/workflows/dotnet.yml/badge.svg)](https://github.com/BrunevalPE/EzRabbitMq/actions/workflows/dotnet.yml)
+[![.NET](https://github.com/BrunevalPE/EzRabbitMQ/actions/workflows/dotnet.yml/badge.svg)](https://github.com/BrunevalPE/EzRabbitMQ/actions/workflows/dotnet.yml)
 
 The main goal of this library is simplifying the usage of **RabbitMQ dotnet client**.
 
