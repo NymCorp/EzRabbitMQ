@@ -15,8 +15,8 @@
         <Product>EzRabbitMQ</Product>
         <PublishRepositoryUrl>true</PublishRepositoryUrl>
         <IncludeSymbols>true</IncludeSymbols>
-        <TargetFrameworks>net5.0;net6.0</TargetFrameworks>
-        <LangVersion>10.0</LangVersion>
+        <TargetFrameworks>net5.0;net6.0;net7.0;net8.0</TargetFrameworks>
+        <LangVersion>11</LangVersion>
         <Nullable>enable</Nullable>
         <Authors>NymCorp</Authors>
         <License>https://raw.githubusercontent.com/NymCorp/EzRabbitMQ/main/license.txt</License>
