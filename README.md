@@ -26,8 +26,8 @@ services.AddEzRabbitMQ();
 
 ## Requirements:
 
-- .Net 5 / .Net Core 6
-- RabbitMQ Client version allowed from [6.2.2,]
+- .Net 5 / .Net Core 6,7,8
+- RabbitMQ Client version allowed from [6.4.0,]
 
 ## Usage:
 
