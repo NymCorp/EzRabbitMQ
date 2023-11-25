@@ -23,7 +23,7 @@ jobs:
     - name: Release Tag Updater
       uses: sersoft-gmbh/running-release-tags-action@v3.0
     - name: Generate a NuGet package
-      run: dotnet pack ./Src/EzRabbitMQ/EzRabbitMQ.csproj --no-build -c Release -o .
+      run: dotnet pack ./Src/EzRabbitMQ/EzRabbitMQ.csproj -p:PackageVersion=${{ github.ref_name }} --no-build -c Release -o .
     - name: Push to GitHub package registry
-      run: dotnet nuget push *.nupkg -s 'https://api.nuget.org/v3/index.json' -k ${{ secrets.NUGET_TOKEN }} --skip-duplicate --no-symbols
+      run: dotnet nuget push *.nupkg -s 'https://api.nuget.org/v3/index.json' -k ${{ secrets.NUGET_TOKEN }} --skip-duplicate
    
