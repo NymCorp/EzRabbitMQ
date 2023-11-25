@@ -15,7 +15,7 @@ When you create a `Mailbox` you can specify the `ConsumerOptions` allowing you t
 
 ### Install
 
-![Nuget](https://img.shields.io/nuget/dt/:EzRabbitMQ)
+![Nuget](https://img.shields.io/nuget/dt/EzRabbitMQ)
 
 `dotnet add package EzRabbitMQ`
 
