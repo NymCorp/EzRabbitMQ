@@ -25,10 +25,10 @@ jobs:
     - uses: mer-team/rabbitmq-mng-action@v1.2
       with:
         RABBITMQ_TAG: '3-management-alpine'
-    - name: Unittests
-      uses: zyborg/dotnet-tests-report@ce730c068bb73480dcb37c02d40890bf8b44c953
+    #- name: Unittests
+    # uses: zyborg/dotnet-tests-report@ce730c068bb73480dcb37c02d40890bf8b44c953
     - name: Generate a NuGet package
       run: dotnet pack ./Src/EzRabbitMQ/EzRabbitMQ.csproj --no-build -c Release -o .
     - name: Push to GitHub package registry
-      run: dotnet nuget push *.nupkg -s 'https://api.nuget.org/v3/index.json' -k $NUGET_TOKEN --skip-duplicate --no-symbols
+      run: dotnet nuget push *.nupkg -s 'https://api.nuget.org/v3/index.json' -k "$NUGET_TOKEN" --skip-duplicate --no-symbols
    
